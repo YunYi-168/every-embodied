@@ -875,6 +875,183 @@ GPU 曲线：
 
 ---
 
+## 3.15 公开高分方案参考与复盘
+
+本节整理的是 2026-05-13 可以公开查到的 LeHome Challenge 相关方案。这里先把结论说清楚：**官方榜单前 1 到 3 名没有看到明确开源的完整方案**。已经公开的内容里，最值得大家参考的是接近前列的队伍复盘、VLA 改进仓库，以及若干可对照的参赛仓库。
+
+这些内容不建议直接当成“复制就能进前三”的配方。更合理的用法是：先用前面章节跑通 `ACT/DP + state + RGB` baseline，再按本节的方法逐项增强。
+
+### 3.15.1 官方榜单当前前列情况
+
+官网 Leaderboard 由接口动态加载，页面源码里对应接口是：
+
+- `https://lightwheel.ai/lwapi/open/lehome/ranking`
+- 请求方式：`POST`
+- 请求体：`{}`
+
+截至 2026-05-13，该接口返回的仿真赛前 8 名如下：
+
+| 排名 | Registration ID | Team | Long-Sleeved Top | Short-Sleeved Top | Long Pant | Short Pant | Avg |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | `r84` | `ilya` | 74.5% | 70.0% | 80.5% | 93.5% | 79.63% |
+| 2 | `r196` | `Shubham @ Vorwerk` | 73.0% | 62.5% | 71.5% | 87.0% | 73.50% |
+| 3 | `r55` | `Dum-E` | 76.5% | 62.0% | 75.5% | 79.5% | 73.38% |
+| 4 | `r161` | `SCUT-Unlimited` | 65.5% | 66.0% | 70.0% | 91.0% | 73.13% |
+| 5 | `r201` | `GraspYesAI` | 73.5% | 61.0% | 69.0% | 79.0% | 70.63% |
+| 6 | `r162` | `sZs` | 70.5% | 64.0% | 68.5% | 75.5% | 69.63% |
+| 7 | `r218` | `ClothFolder50k` | 77.0% | 56.0% | 58.5% | 82.5% | 68.50% |
+| 8 | `r13` | `sisigakgak` | 68.0% | 52.5% | 64.0% | 77.5% | 65.50% |
+
+大家需要注意两点：
+
+- 前 8 名并不等于全部开源。排行榜只给了队伍名和成功率，没有给方法、代码或 checkpoint。
+- 公开仓库和榜单队伍名不一定一一对应。除非仓库 README 或队伍说明明确写了对应关系，否则本教程只把它们当作“公开参考方案”。
+
+### 3.15.2 方案一：UCAS 复盘，分类器 + 专家 ACT + PI0.5
+
+参考链接：
+
+- 参赛仓库：[wangerforcs/lehome-challenge-ucas](https://github.com/wangerforcs/lehome-challenge-ucas)
+- 中文复盘：[wangerforcs/EILearn/competition/lehome.md](https://github.com/wangerforcs/EILearn/blob/master/competition/lehome.md)
+
+这个复盘是目前最值得大家细读的公开资料之一。它不是一个只给命令的 README，而是比较完整地记录了从 baseline 到比赛后期的尝试路径。
+
+第一阶段是 `classifier + ACT`。核心想法是：评测时官方不会直接告诉你当前 garment 属于哪一类，因此如果想为四类衣物分别训练专家策略，就需要先判断类别。做法大致是：
+
+1. 用 ResNet 之类的视觉分类器识别当前衣物类别。
+2. 对 `top_long`、`top_short`、`pant_long`、`pant_short` 分别训练 ACT。
+3. 推理时先分类，再路由到对应的 ACT 专家模型。
+
+这个路线的优点是简单、清晰，容易在官方 LeRobot 框架里实现。缺点也很明显：分类错误会直接把样本送到错误专家；如果某个类别数据质量差，单独专家也会被带偏。复盘里提到，这个阶段整体提交后大约在 42% 左右，说明它能跑通，但距离 60% 以上还有差距。
+
+第二阶段主要切到 `PI0.5`。他们保留了和 ACT 类似的输入输出形式：
+
+- 输入：`observation.state`
+- 输入：`observation.images.top_rgb`
+- 输入：`observation.images.left_rgb`
+- 输入：`observation.images.right_rgb`
+- 输出：12 维 `action`
+
+这里没有把 depth 当成第一优先级，原因和本教程前面的建议一致：如果预训练模型本身不是围绕 depth 训练的，直接加 depth 会增加工程复杂度，但不一定带来稳定收益。
+
+第三阶段开始做更细的数据和类别处理。复盘里特别提到 `top_short` 和 `pant_short` 是主要瓶颈：有些数据 replay 出来的动作本身不稳定，有些成功/失败样本保存逻辑也会引入脏数据。这个经验非常重要：LeHome 不是只靠换模型就能解决的任务，数据质量经常比模型名字更关键。
+
+对大家复刻的启发：
+
+- 如果只想快速超过普通 baseline，可以先做“四类专家模型 + 类别识别器”。
+- 如果发现某一类明显拖后腿，不要只看总分，要单独看四个类别的成功率。
+- 对 `top_short`、`pant_short` 这类难点，优先检查数据 replay 和失败样本，而不是盲目加大模型。
+- 如果训练资源有限，先把一个类别训到可复现的成功率，再扩到四类。
+
+### 3.15.3 方案二：SPGVLA，给 VLA 增加进度引导和世界模型监督
+
+参考链接：
+
+- 代码仓库：[blackcat0615/spgvla](https://github.com/blackcat0615/spgvla)
+- 模型链接 1：[spgvla](https://huggingface.co/blackcat0615/spgvla)
+- 模型链接 2：[spgvla0.7](https://huggingface.co/blackcat0615/spgvla0.7)
+
+`SPGVLA` 的全称是 `Simple Progress Guidance For Vision Language Action Model`。它的出发点是：衣物折叠是长时序任务，模型很容易不知道自己已经处在“抓取、拉平、折叠、收尾”中的哪一步，于是出现状态混淆。
+
+这个仓库做了两个增强：
+
+1. `SPG`：Simple Progress Guidance。给模型额外提供任务进度相关的信息，帮助 VLA 判断当前处于任务的哪个阶段。
+2. `WM`：world model module。用世界模型提供更密集的监督信号，缓解 VLA 训练时只有稀疏行为克隆信号的问题。
+
+仓库 README 里给出的公开实验结果如下：
+
+| 实验设置 | top long | top short | pants long | pants short | mean SR |
+| --- | --- | --- | --- | --- | --- |
+| baseline SmolVLA | 61.67% | 10.00% | 31.67% | 76.67% | 45.00% |
+| baseline + SPG | 55.00% | 21.67% | 45.00% | 80.00% | 50.40% |
+| baseline + SPG + bs64 | 63.33% | 25.00% | 33.33% | 88.33% | 52.50% |
+| baseline + SPG + bs64 + WM | 70.00% | 25.00% | 45.00% | 86.67% | 56.67% |
+| baseline + SPG + bs96 + WM + data aug retrain | 73.30% | 45.00% | 58.33% | 85.00% | 65.40% |
+
+这个结果对大家最有用的地方不是“照抄模块名”，而是它展示了一个清晰趋势：单纯换 VLA baseline 不一定够，进度信号、世界模型辅助监督、batch size 和数据增强叠加后，才从 45% 拉到 65.4%。
+
+复刻时建议这样理解：
+
+- `SPG` 适合解决长时序阶段混淆，例如袖子还没拉平就开始折。
+- `WM` 适合补充中间状态监督，让模型不只学习最终动作标签。
+- `data_aug_retrain` 对 LeHome 很关键，因为官方每类数据并不大，视觉分布稍微变化就会影响成功率。
+- `top_short` 是明显短板，即使增强后也只有 45%，说明公开方案里它依然难。
+
+如果大家已经跑通本教程的 `four_types_merged + ACT`，下一步可以参考 SPGVLA 的思想，不一定马上切完整 VLA，而是先做两个轻量实验：
+
+1. 给 ACT/SmolVLA 加类别或阶段条件，例如 `garment_type`、`stage_id`、进度比例。
+2. 对每类数据做保守图像增强，观察 `top_short` 是否提升。
+
+### 3.15.4 方案三：LaundryNauts，VLA 微调式参赛仓库
+
+参考链接：
+
+- [cwoodhayes/lehome-laundrynauts](https://github.com/cwoodhayes/lehome-laundrynauts)
+
+这个仓库描述为 `fine-tuned VLA for bimanual garment folding`，目录结构基本是在官方 LeHome 仓库上扩展，包含 `configs`、`docker_policy`、`scripts`、`source/lehome` 等内容。它和官网榜单里的 `LaundryNauts` 名字能对应上，但榜单平均分是 40.00%，所以它更适合作为“VLA 工程组织方式”的参考，而不是高分策略模板。
+
+大家可以重点看三类内容：
+
+- 它如何在官方仓库结构里组织自定义 policy。
+- 它如何准备 Docker/submission 相关文件。
+- 它如何把 VLA 训练和官方评测脚本接起来。
+
+这类仓库的价值在于工程参考：当大家自己的方法已经从 `lerobot-train` 走向自定义模型、Docker 提交、远端评测时，可以对照它检查目录和脚本是否完整。
+
+### 3.15.5 方案四：S.N.N Neural Lab，公开但非前列的对照仓库
+
+参考链接：
+
+- [alifestone/lehome-challenge_S.N.N](https://github.com/alifestone/lehome-challenge_S.N.N)
+
+该仓库和官网榜单里的 `S.N.N Neural Lab` 基本能对上，榜单平均分是 40.38%。它不是高分方案，但适合作为对照材料：同样是基于官方环境做参赛工程，最后分数可能仍然停留在 40% 左右。
+
+对教程来说，这类仓库提醒大家：LeHome 的主要难点不是“能不能启动训练”，而是：
+
+- 数据质量是否足够干净。
+- 四类衣物是否分别优化。
+- 推理时是否能处理随机 garment 类别。
+- 模型是否理解长时序进度。
+- 评测脚本、checkpoint 路径、Docker 提交是否严格一致。
+
+### 3.15.6 从公开方案提炼出的实用路线
+
+如果大家已经完成前面章节的 smoke test，本教程建议按下面顺序继续：
+
+1. **先做稳定 baseline**
+   使用 `dataset_challenge_merged`，输入保持 `state + top/left/right RGB`，输出保持 12 维 joint action。先跑通 `ACT`，再考虑 `DP` 或 `SmolVLA`。
+
+2. **看四类单独分数，不只看平均分**
+   官方榜单里很多队伍都是 `short pant` 很高、`top_short` 偏低。平均分掩盖了短板，大家要单独记录四类成功率。
+
+3. **尝试专家模型和类别分类器**
+   如果四类差异明显，可以为四类衣物分别训练专家策略，再用分类器路由。这个方法工程简单，但要防止分类错误。
+
+4. **清洗和补强困难类别数据**
+   公开复盘里反复提到数据问题。大家在训练前最好 replay 一部分数据，尤其是 `top_short` 和 `pant_short`，把明显失败或动作偏移严重的 episode 单独标出来。
+
+5. **再上 VLA 或进度增强**
+   如果 baseline 已经稳定，再参考 `SPGVLA` 增加进度引导、世界模型辅助监督或数据增强。不要在环境还没跑通时直接堆复杂模型。
+
+6. **提交前固定评测和提交链路**
+   高分方案最终也要能在官方评测里跑起来。自定义 policy、Docker、checkpoint 路径、依赖版本要单独验证，不能只看本地训练 loss。
+
+### 3.15.7 参考链接汇总
+
+- LeHome 官网：[https://lehome-challenge.com/](https://lehome-challenge.com/)
+- 官方仓库：[lehome-official/lehome-challenge](https://github.com/lehome-official/lehome-challenge)
+- 官方资产数据：[lehome/asset_challenge](https://huggingface.co/datasets/lehome/asset_challenge)
+- 官方合并训练数据：[lehome/dataset_challenge_merged](https://huggingface.co/datasets/lehome/dataset_challenge_merged)
+- UCAS 参赛仓库：[wangerforcs/lehome-challenge-ucas](https://github.com/wangerforcs/lehome-challenge-ucas)
+- UCAS 中文复盘：[wangerforcs/EILearn/competition/lehome.md](https://github.com/wangerforcs/EILearn/blob/master/competition/lehome.md)
+- SPGVLA 仓库：[blackcat0615/spgvla](https://github.com/blackcat0615/spgvla)
+- SPGVLA 模型：[blackcat0615/spgvla](https://huggingface.co/blackcat0615/spgvla)
+- SPGVLA 0.7 模型：[blackcat0615/spgvla0.7](https://huggingface.co/blackcat0615/spgvla0.7)
+- LaundryNauts 仓库：[cwoodhayes/lehome-laundrynauts](https://github.com/cwoodhayes/lehome-laundrynauts)
+- S.N.N Neural Lab 仓库：[alifestone/lehome-challenge_S.N.N](https://github.com/alifestone/lehome-challenge_S.N.N)
+
+---
+
 ## 4. 推荐训练策略
 
 ### 4.1 baseline 配置
