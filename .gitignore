@@ -199,6 +199,8 @@ datawhale_eai_pnp_language
 # Local ebook web app dependencies
 node_modules/
 artifacts/
+.lingbot_web_runs/
+lingbot_map_runs/
 
 # Keep ebook web shared logic tracked
 !web/lib/
