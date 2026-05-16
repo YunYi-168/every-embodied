@@ -114,6 +114,10 @@ def get_next_action(
 
 剩下的代码都是完成可视化的任务。最终代码的实现效果如下：
 
+<img src="assets/habitatlab_example1.png"/>
+
+<img src="assets/habitatlab_example2.png"/>
+
 其实最终生成的是一个视频，生成视频的输出路径在代码中的 `output_path = "examples/tutorials/habitat_lab_visualization/"` 可根据需要修改。
 
 
@@ -150,6 +154,10 @@ while not env.habitat_env.episode_over:
 ```
 
 最终可视化结果与habitatlab_example.py保持一致。（有一些可视化内容不一致，需要的可以自行添加）
+
+<img src="assets/habitatrl_1.png"/>
+
+<img src="assets/habitatrl_2.png"/>
 
 参考资料：
 

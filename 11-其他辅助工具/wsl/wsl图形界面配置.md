@@ -2,6 +2,8 @@
 wsl
 ```
 
+![image.png](./assets/a85b9693-6964-4d81-9cee-e2a1e5d7313c.png)
+
 安装完成后
 
 ```bash
