@@ -15,7 +15,10 @@ cd lerobot && git checkout d602e816 # 必须要这个版本，后续版本可能
 git clone https://github.com/Lifelong-Robot-Learning/LIBERO
 ```
 
-python3 download\_hf\_files.py nikriz/aopoli-lv-libero_combined_no_noops_lerobot_v21 main --repo-type dataset --download\_path /home/vipuser/217data/aopoli-lv-libero
+```bash
+export DATA_ROOT=/path/to/data
+python3 download_hf_files.py nikriz/aopoli-lv-libero_combined_no_noops_lerobot_v21 main --repo-type dataset --download_path "$DATA_ROOT/aopoli-lv-libero"
+```
 
 ### 最开始需要进行环境配置
 
@@ -78,29 +81,33 @@ export TOKENIZERS_PARALLELISM=false
 ### 第一步是在自由子集上训练 smolvla
 
 ```bash
+export MODEL_ROOT=/path/to/models
+export DATA_ROOT=/path/to/data
+export OUTPUT_ROOT=/path/to/outputs
+
 python -m lerobot.scripts.train \
---policy.type=/home/vipuser/117models/smolvla_base \
+  --policy.type="$MODEL_ROOT/smolvla_base" \
   --policy.load_vlm_weights True \
-  --dataset.repo_id=/home/vipuser/117models/aopoli-lv-libero \
+  --dataset.repo_id="$DATA_ROOT/aopoli-lv-libero" \
   --batch_size=64 \
   --steps=200000 \
   --wandb.enable=true \
   --save_freq 10000 \
-  --output_dir=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch \
+  --output_dir="$OUTPUT_ROOT/libero_smolvla_scratch" \
   --job_name=libero_smolvla_scratch_ckk \
   --policy.push_to_hub=False
   
 # 继续训练的方法
 python -m lerobot.scripts.train \
   --resume=true \
-  --config_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/200000/pretrained_model/train_config.json \
+  --config_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200000/pretrained_model/train_config.json" \
   --steps=200170
   
   20260124
   
 python -m lerobot.scripts.train \
   --resume=true \
-  --config_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/200000/pretrained_model/train_config.json \
+  --config_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200000/pretrained_model/train_config.json" \
   --steps=200340
 ```
 
@@ -114,7 +121,7 @@ CUDA\_VISIBLE\_DEVICEs="0" 用于解决多 GPU 训练中的问题。另外，我
 
 我在 RTX 3090 上的训练如下：
 
-[![图像](https://private-user-images.githubusercontent.com/51797647/475511922-6b42dba3-bbd3-49fe-abff-2d81c6673602.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTc1Nzg0MjcsIm5iZiI6MTc1NzU3ODEyNywicGF0aCI6Ii81MTc5NzY0Ny80NzU1MTE5MjItNmI0MmRiYTMtYmJkMy00OWZlLWFiZmYtMmQ4MWM2NjczNjAyLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA5MTElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwOTExVDA4MDg0N1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWE4MDlkNjZjMGY2ZDgyMjkyNzI0NDk5OTA3YTM1MTAwYWIxMWQ4ZTA1MTc1NmE2MjhhMTllMjgxOTUzYzE1NGMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.pouA26pJAnOfjOKXttEZ8FXuOR8Gb1S-QjOC4D6AFLs)](https://private-user-images.githubusercontent.com/51797647/475511922-6b42dba3-bbd3-49fe-abff-2d81c6673602.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTc1Nzg0MjcsIm5iZiI6MTc1NzU3ODEyNywicGF0aCI6Ii81MTc5NzY0Ny80NzU1MTE5MjItNmI0MmRiYTMtYmJkMy00OWZlLWFiZmYtMmQ4MWM2NjczNjAyLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA5MTElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwOTExVDA4MDg0N1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWE4MDlkNjZjMGY2ZDgyMjkyNzI0NDk5OTA3YTM1MTAwYWIxMWQ4ZTA1MTc1NmE2MjhhMTllMjgxOTUzYzE1NGMmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.pouA26pJAnOfjOKXttEZ8FXuOR8Gb1S-QjOC4D6AFLs)
+![SmolVLA LIBERO 训练日志](assets/image-20251030144540186.png)
 
 上面其他人报告的结果在 60k 步以上时还不错。我提前停止了，因为我想测试一下评估脚本。
 
@@ -770,25 +777,25 @@ if __name__ == "__main__":
 要运行此脚本，请使用：
 
 ```
-python eval\_LIBERO.py --policy\_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/140000/pretrained_model/
+export OUTPUT_ROOT=/path/to/outputs
 
-python eval\_LIBERO.py --policy\_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/130000/pretrained_model/
+python eval_LIBERO.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/140000/pretrained_model/"
 
-python eval\_LIBERO.py --policy\_path=/mnt/c/Users/kewei/17robo/117models/200000/pretrained_model
+python eval_LIBERO.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/130000/pretrained_model/"
 
-python eval\_LIBERO.py --policy\_path="C:\Users\kewei\17robo\117models\200000\pretrained_model"
+python eval_LIBERO.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200000/pretrained_model/"
 
-python eval\_LIBERO.py --policy\_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/200170/pretrained_model/
+python eval_LIBERO.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200170/pretrained_model/"
 
-python eval\_LIBERO-task1.py --policy\_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/200170/pretrained_model/
-
-
-python eval\_LIBERO.py --policy\_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/200340/pretrained_model/
-
-python eval\_LIBERO-task1.py --policy\_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/200340/pretrained_model/
+python eval_LIBERO-task1.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200170/pretrained_model/"
 
 
-python eval\_LIBERO-task1-libero10.py --policy\_path=/home/vipuser/517robo/libero-smolvla/model_outputs/train/libero_smolvla_scratch/checkpoints/200340/pretrained_model/
+python eval_LIBERO.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200340/pretrained_model/"
+
+python eval_LIBERO-task1.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200340/pretrained_model/"
+
+
+python eval_LIBERO-task1-libero10.py --policy_path="$OUTPUT_ROOT/libero_smolvla_scratch/checkpoints/200340/pretrained_model/"
 
 ```
 
@@ -829,7 +836,6 @@ init_states = torch.load(init_states_path, weights_only=False)
 2025-08-07 10:49:34,622 - INFO - Total successes: 356
 
 推出任务9第47集：把黑碗放到木柜上并放到盘子上成功.mp4 推出任务3第26集：拿起饼干盒上的黑碗并将其放在盘子上成功.mp4
-
 
 
 
