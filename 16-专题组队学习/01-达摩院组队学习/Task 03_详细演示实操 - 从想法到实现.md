@@ -1,4 +1,118 @@
-# **Task 03:** 仿真平台实操详细介绍
+# **Task 03: 演示**实操
+
+## **1. 学习概述**
+
+在前两天中，你已经建立了“具身智能是什么”和“主流技术路线是什么”的认知。今天这一节要做的事情，是把这些抽象概念落到一条真正可见的开发链路上。学习者经常会听到“数据采集”、“模型微调”、“仿真调试”、“部署验证”这些词，但如果没有真正看过一遍，很容易把它们当成彼此独立的步骤。实际上，在具身智能里，这些环节不是并列摆放的名词，而是严格耦合的一条流水线。
+
+从这一部分开始，你将亲手完成一次仿真环境下的数据采集与模型微调。请按照步骤顺序操作，每一步都配有示意图。如有疑问，你可以查看相关教程👉🏻[仿真环境教程](https://developer.damo-academy.com/course/online/detail/303?key=1)
+
+仿真实操主要包含以下环节：**创建任务 → 采集数据 → 确认数据集 → 创建微调任务 → 查看训练状态 → 导出模型 → 部署服务 → 技能调试。**下面章节逐一说明。
+
+在此之前，我们先了解平台的基本能力：数据从哪里来，模型如何学会一个技能，仿真平台在中间发挥什么作用，乐云平台又是如何把这些步骤组织给学习者看的。
+
+
+
+## **2. 机器人如何学习一项新技能？**
+
+如果开发一个具身技能，典型流程大致如下：
+
+```
+flowchart TD
+    A[遥操/数据采集] --> B[数据预处理与导出]
+    B --> C[构建训练环境]
+    C --> D[模型微调 Fine-tuning]
+    D --> E[仿真评测]
+    E --> F[本体部署与真机测试]
+    F -.数据回流.-> A
+```
+
+这条链路的难点在于，它并不是一个纯软件问题。你不能只会写模型代码，也不能只会控制机械臂。它同时涉及遥操、数据、仿真、训练、部署和硬件，任何一个环节出问题，最后都会反馈到“机器人为什么做不出来”这个结果上。对个人学习者来说，最大的门槛通常在两个地方：一是没有真机，很难自己采集高质量数据；二是没有完整环境，很难理解训练、调试和部署到底如何串起来。也正因为如此，乐云平台在本专题中的作用非常明确：它不是要替代所有底层工程，而是帮助学习者先看懂整条链路长什么样。
+
+## **3. 乐云具身智能平台功能速通**
+
+如果把乐云平台看成一套帮助学习者理解具身智能工程闭环的教学入口，那么它最值得先看懂的，不是某一个孤立功能，而是几个核心模块之间如何分工。平台主要包含三大核心模块：
+
+| **功能模块** | **作用**                       | **同学能做什么**                                 |
+| ------------ | ------------------------------ | ------------------------------------------------ |
+| **模型广场** | 预置 π0、RynnVLA、GR00T 等模型 | 了解并调用平台现有具身智能模型                   |
+| **数据管理** | 上传/管理/标注数据             | 查看真机与仿真采集的数据集（如关节角曲线、视频） |
+| **模型服务** | 模型训练、调优、部署           | 体验技能调试与模型部署流程                       |
+
+**一句话记住三者的关系**：模型广场负责“看和选”，数据管理负责“看数据”，模型服务负责“把技能跑起来”。这句话虽然简短，但背后对应了一套很典型的工程逻辑。模型广场让你知道平台已经提供了哪些能力基础，数据管理让你看到模型背后依赖的数据形式，模型服务则让你知道这些能力最终如何进入训练、调优和部署流程。对初学者来说，只要先看懂这三者的关系，就已经跨过了“我知道平台很多页面，但不知道它们彼此有什么关系”的阶段。也可以说，这一节不是在教你“点哪里”，而是在教你先建立一张工程地图。
+
+
+
+## **4. 平台演示**
+
+### **（一）登录并进入平台**
+
+操作上，这一步很简单：先登录DAMO开发者矩阵，再点击“立即体验”，进入乐云具身智能开发平台。但从学习角度看，这一步真正的意义并不在“成功登录”，而在于你开始把抽象的专题学习内容和一个真实的平台系统对应起来。很多时候，学习者在读资料时会把“平台”想成一句空泛的话，只有真的看到入口、首页和模块布局之后，后面的内容才会变得具体。
+
+乐云平台：https://developer.damo-academy.com/playground?spm=a1z26upx.zdxx.0.0&from=zdxx
+
+参考界面：
+
+![img](assets/task03_01_3dfc51d5.png)![img](assets/task03_02_7ed197e5.png)
+
+![img](assets/task03_03_72cc1b25.png)
+
+
+
+### **（二）先看平台能力，不急着操作**
+
+第一次进入时，建议先有一个“地图感”，不要急着点功能。你至少要知道平台里哪些部分对应下面这条链路：
+
+```
+数据 -> 模型 -> 调试 -> 执行 -> 回看结果
+```
+
+这一阶段最重要的不是把每个按钮都点一遍，而是先建立一种“平台认知地图”。你需要先知道模型广场、数据管理、模型服务、智能体与设备管理分别在什么位置，又分别对应整条开发链路中的哪一个环节。有了这层地图感，后面再进入具体模块时，你看到的就不是一堆零散界面，而是一条连续过程的不同切面。
+
+换句话说，这一步是在建立“平台世界观”。如果你一开始就陷入某个具体按钮，很容易误以为平台只是一些功能页的堆叠；但如果你先看懂它的整体布局，就会逐渐意识到，平台首页其实已经在暗示一条完整的具身开发链路。对于教材读者来说，这种先总后分的观看方式，比直接记住页面名称更重要。
+
+参考界面：
+
+![img](assets/task03_04_4baa9672.png)
+
+![img](assets/task03_05_a1aa4859.png)
+
+![img](assets/task03_06_1fc13013.png)
+
+
+
+### **（三）了解后台基础页面**
+
+第一次体验时，可以先知道这些页面是做什么的，但不要求全部深入。设备页面更偏向真实机器人接入和激活，智能体页面则更偏向任务编排和对话式能力调用。换句话说，这一部分并不是今天的主角，但它会帮助你理解：平台并不只是一堆模型 demo，它最终还是要回到“如何管理机器人、如何组织任务”这样的真实系统问题上。
+
+这里尤其值得初学者留意一个常被忽略的事实：具身智能平台之所以复杂，不是因为它“页面多”，而是因为它天然就站在模型和真实系统之间。设备管理对应的是硬件接入和运行对象，智能体管理对应的是任务组织和能力编排。它们看起来不像最“炫”的部分，但恰恰是系统真正落地时绕不过去的那一层。
+
+参考界面：
+
+![img](assets/task03_07_62ac0c3a.png)
+
+![img](assets/task03_08_6233f942.png)
+
+
+
+### **（四）查看数据集和数据详情**
+
+接下来查看数据管理页面，因为模型不是凭空会做事的，它背后必须有数据、有训练、有评估。此时再看数据管理页面，你看到的就不再只是表格和字段，而是一个技能之所以能够被训练出来的基础材料。
+
+这一部分建议重点观察三件事：数据集的组织方式、单条数据包含哪些字段，以及平台如何把视频、关节角曲线和数值信息放到同一个查看界面里。尤其是最后一点非常关键，因为它直接体现了具身数据与普通文本数据的不同。对于具身任务来说，数据不是一句句文本，而是视觉、动作、本体状态等多种信息共同组成的时间序列。
+
+这也是为什么很多做过大语言模型项目的同学，第一次接触具身数据时会感到不适应。文本数据往往是离散的句子或段落，而具身数据本质上是随时间展开的连续过程。一个动作为什么成功，往往要回到执行前后的整段观察、姿态变化和控制信号中去理解。平台把这些信息并列展示出来，本身就是一种非常好的教学方式，因为它把“具身任务为什么更难”这件事直接变成了可以被看到的事实。
+
+参考界面：
+
+![img](assets/task03_09_8202bee9.png)
+
+![img](assets/task03_10_f3d92e17.png)
+
+![img](assets/task03_11_4df3d152.png)
+
+![img](assets/task03_12_255059dc.png)
+
+![img](assets/task03_13_19a6a1ee.png)
 
 从这一部分开始，你将亲手完成一次仿真环境下的数据采集与模型微调。
 
@@ -8,21 +122,31 @@
 
 
 
-## **1.** 仿真数据采集
+## **5. 体验目标**
+
+今天的体验目标将完成一次仿真实操闭环体验：**进入平台 → 了解模型 → 仿真数采 → 模型训练 → 部署调试**。只要你真正走完这一圈，就会开始理解具身智能平台为什么不能只看成一个模型展示页。它更像是把数据、模型、执行和结果组织在一起的工程中台，而这正是很多初学者最难凭空想象出来的一层内容。
+
+
+
+## 仿真实操完整步骤
+
+以下是今天主线实操的五个环节，请按顺序操作。
+
+### **第一步：完成仿真数据采集**
 
 **1.1 创建任务**
 
 首先，进入**数据采集 → 仿真数采**页面，点击“新增任务集”。在配置界面中依次填写任务集名称、描述、任务描述和任务指令，然后点击下一步。选择一个带有“空闲”标志的仿真机器人设备（可按构型筛选），创建完成后点击详情进入采集任务详情页。
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304426cd583fcc53a813f8d4a7c0ecd16869273971a643365fa9d4d286e8068a2bd92c15ce13c29f9744fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_14_1c99dd80.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd530486d7e23f483ff24110d2e708fc7709d2c8d40f88aa9905d477aa77f6471a6c2c20992a4004a6a6c54fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_15_44635869.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304fc252e0973752a9257c2a8562020b1e47e4f3805904963f81cd00d5ffbd6ff41dd3eb6b9f988d8494fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_16_1a239542.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd53040515cfe291715acc48631cd5d493cbd27dcf60d5f3bde54ce8001311dbc728bb66cba8444cc18def4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_17_99535ea3.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd53041c77ea9b95aabe3775ac52a43fb86309d302add84fbac38c1e4801edf1b1697963d7d763174b694b4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_18_e2dd8118.png)
 
 
 
@@ -32,45 +156,45 @@
 
 如果需要重置场景道具的位置，可以点击“复位”按钮。重复上述步骤，直到所有预设的回合录制完成。录制完成后，在任务详情中会生成新的采集记录，其中包含多个回合的数据集。点击每条记录的详情，可以查看录制视频、关节角数据和对应的指令内容。
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304c1fe5d940f59d75b90eaeddca3b55846d84f79d120ba096cb97b2c23a47a23e5c15d46a0fbcaae984fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_19_be85b97c.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304f69dcac79a77bf939aa4dda2ca0a13d9eac7c94722160472dffa7fff2741f5f2c0ae4c07779fb2834fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_20_dcb5af75.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd53041c5a079364ccf1e603320f49b9c19251e77f43f0bd153bb6dff1eae75c499d706b3f1f78063fc4ba4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_21_9dcc338a.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304fc7d5d4277662d9fe842767571e181dc0d50d312ef63245b5ae129c93bb976daa15cbac7902d8ad04fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_22_ed4e93e0.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd530420ccac752fded59b271f80d59ba7dbfa99a6ca09923dbd16dc1f548609653b17906ef3390c1b1c7a4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_23_5742e675.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304e032228300eab3009f3b44b8f0c464eeae5917ad941aa2392f1b3b2efa42eb1a78d71c3cb108c1704fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_24_0600d07e.png)
 
 
 
-## **2. 数据集查看**
+### **第二步：查看仿真环境采集的数据集**
 
 完成数据采集后，需要确认数据集是否正确导入。进入**数据管理**页面，查看“我的数据集”。每一行代表一个数据集，点击“查看”可展开详情，看到每一条数据的帧率、帧数、指令等信息。再点击“详情”会打开一个小窗口，里面并排展示了采集的视频、关节角曲线图和关节角数值表格，可以在线播放查看。如果遇到浏览器视频乱码，请关闭浏览器的硬件加速功能并重启浏览器。
 
-![img](https://alidocs.oss-cn-zhangjiakou.aliyuncs.com/res/AJdl65ARkzAxQOke/img/22d71d25-75bf-4c31-9748-3288a82a299b.png)
+![img](assets/task03_25_2fb865ba.png)
 
-![img](https://alidocs.oss-cn-zhangjiakou.aliyuncs.com/res/AJdl65ARkzAxQOke/img/687ddf53-eb92-49dc-9210-9ac6d40596e8.png)
+![img](assets/task03_26_bce98433.png)
 
-![img](https://alidocs.oss-cn-zhangjiakou.aliyuncs.com/res/AJdl65ARkzAxQOke/img/03444dc7-0c38-48bf-a6eb-4c2af3797b7a.png)
+![img](assets/task03_27_34a50ce7.png)
 
 
 
-## 3. 模型微调
+### **第三步：****模型微调与训练**
 
 **3.1 创建模型微调任务**
 
 接下来进入模型微调环节。进入**模型调优**页面，点击“创建训练任务”（注意当前同一体验用户仅有一个训练任务可同时运行）。首先填写基本信息，目前支持 LeRobot | SO-101 机器人构型及其对应的数据集。然后在模型配置中，可以选择官方预置的模型，也可以选择你自己微调后导出的自定义模型（自动导出会在训练成功后执行，若训练失败需手动导出）。超参配置已经设置为推荐值，你也可以根据个人需求调整。选择好训练配置后，点击“开始训练”。此时可以在模型调优任务列表中看到新创建的任务，并跟踪其状态。
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304c0dcbff91b552c2eaa3abe15762b3642ae1a17f33183408a6a652a037e341fe469ffc87e8944039c4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_28_f6d925d1.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd53045f43f6011c6fc536d0943eb79517f33bbbe7437ea4a4f4c35f33eebe631accfe9a96f3b5999843df4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_29_f7dd88c9.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304e71f502bb9cc82fa58d322cefa89c3dd4c5dc9abc6d4b74574179f30756ff4d7ee34c4acc16cd1db4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_30_6b30eafd.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304f9975b5cb8a125277c3733291cf945207589ab52daad87af5fc354b5727d4b68878becb594c85d974fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_31_c3036265.png)
 
 
 
@@ -78,19 +202,19 @@
 
 在任务详情页面，你可以多维度查看训练进展。详情信息页显示训练配置；资源监控页显示 CPU、GPU 和内存占用；训练指标页展示各类指标的变化趋势；时间线页呈现整体训练进度；日志页可以查看详细的输出日志；产出模型页则会在训练完成后列出最终得到的模型文件。
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304c9739254d7ad020fc1cd9628222583a86580f59b01650139dd777eb656cafcc9c3e97ede07403d234fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_32_304d8333.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde53426166cba4bd7815b0d6fa168a51e0b75b8339e1c4c24831b75b38faadcd24bec177c308ebd530456056042850122f5174f9d68b5503a9f44eccd0eda847fa8015d2fb5863392cae5bf8b993f35cbc94fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_33_342a41af.png)
 
 **3.3 导出模型结果**
 
 训练成功后，需要导出模型。在调优任务详情的“产出模型”页面，可以批量选择或单条导出模型。导出后的模型会出现在“我的模型”页面，你可以在此查看所有已导出的模型；如果误删了，可以回到产出模型页面重新导出。
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde53426166cba4bd7815b0d6fa168a51e0b75b8339e1c4c24831b75b38faadcd24bec177c308ebd53041c56a54a198e5d5e68f6ec27ead4501070812ed296aecdebc081a577c3480b1d0dd8595fda1bdaa34fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_34_d2e7a09a.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde53426166cba4bd7815b0d6fa168a51e0b75b8339e1c4c24831b75b38faadcd24bec177c308ebd5304917bc2e8b34722b6f7372ea077628e802cc39dcae736e56b7f9ab206c217999522cef7164c0045874fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_35_805842aa.png)
 
-## 4. 模型部署
+### **第四步：****模型部署**
 
 得到模型后，下一步是部署服务。
 
@@ -98,29 +222,29 @@
 
 服务上线有三种方式：部署完成后自动上线；已下线的服务可点击按钮重新上线；在模型广场-我的模型中也可以手动上线。服务下线则有自动（在线时长到期）和手动（点击下线按钮或卡片右上角）两种方式。已部署且正在运行的服务可以在“模型广场 → 我的模型”下查看。
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd530498bb2b4fd83ac0896b39638968355b3807b56124301afa8db1d684d12a4303681910226802ab44804fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_36_65c3d010.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd53047963ede79b6833bb1bf07cc5730129b5ee8e36acb7303fe7c46d65812545344caf7508f33876cf434fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_37_cc36f1f1.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304a8b43db07da5bc8769f4740de61930e3947cb6c2944aed7f6db824c30491bdb116859541b7ec931c4fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_38_5aa9a0fa.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd5304ae224f63e6d94aea1ef4fce7c06473af70819865ea58319e2e869da183baaf419a0909fa228dfa034fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_39_36449a67.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd53041007bb3bce8afd12defcdeba3eb45c8abc75eab60d1737a7223a86be08c564e445cdee3e9fee8a354fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_40_d43370f0.png)
 
-## 5. 模型调试
+### **第五步：****模型调试**
 
 最后，在仿真环境中调试你的模型。进入**模型广场**，通过调试环境筛选出“仿真”可用的模型。
 
 点击“模型调试”进入模型详情页，选择仿真环境下对应构型的设备，然后点击“调试”按钮进入仿真调试页面。点击“开始调试”，后台会加载仿真资源。等待加载完成后，你可以观察机器人执行任务的过程，可以等待任务自动完成，也可以手动结束调试。所有的执行记录都可以在页面中查看。
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd530401afda0bbc5f58a3973c4a7b45ed86f150e086ac3292dc499d33ab0fb270001dbbbfcc4157b522d74fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_41_34e5d833.png)
 
-![img](https://alidocs.dingtalk.com/core/api/resources/img/5eecdaf48460cde5c492f13b307c016f051c54cb793210e675b8339e1c4c24831b75b38faadcd24bec177c308ebd530493e5e3dbcddd1439a7438d316fb7b593a652378c6a7748c694e5577042c3190db62be20acfa7dbc04fb4c8ed7016461c?tmpCode=ef6c7a8d-ae74-42c1-bc2b-761f49614155)
+![img](assets/task03_42_b39824ed.png)
 
 
 
-**6.这一节你应该真正看懂什么？**
+## **这一节你应该真正看懂什么？**
 
 今天，你学会了如何**从零到一完成一次具身智能的开发闭环**。请记住：机器人技能并不是“模型突然就会了”，而是经过**数据采集 → 模型微调 → 部署 → 调试**这一整条链路逐步形成的。使用真实硬件本体的开发链路与仿真是完全同理的。
 
@@ -130,7 +254,7 @@
 
 
 
-**7.今日任务（打卡提交）**
+## **今日任务（打卡提交）**
 
 请完成以下小任务，作为今天实操学习的成果证明：
 
