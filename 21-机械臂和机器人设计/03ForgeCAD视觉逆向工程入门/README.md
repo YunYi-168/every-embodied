@@ -94,17 +94,21 @@ npx --yes forgecad@0.9.14 --version
 
 ## 建模拆解
 
-本地复刻脚本按 3D 打印机的真实功能模块拆成多个对象。这里没有把所有零件合并成一个大 `union`，因为官方 GIF 的可读性很依赖局部颜色：黑色框架、银色导轨、蓝色热床、橙色加热板、青色构建体积框和红色料盘都需要单独保留材质。
+这类案例的本质是 AI-assisted CAD，而不是“图片直接变 CAD”。大模型负责把自然语言需求、参考图观察和工程结构拆解写成 `.forge.js` 源码；ForgeCAD CLI 再执行这份 JavaScript/TypeScript 脚本，调用自己的几何建模、布尔、装配、渲染和导出能力，生成可查看、可导出的 CAD 几何。也就是说，`.forge.js` 是 CAD 的源代码，不是最终 CAD 文件；最终可交换的几何结果仍然是 STEP、STL、3MF 等文件。
+
+一个更准确的流程是：
 
 ```mermaid
 flowchart LR
-    A["官方 benchmark prompt"] --> B["结构观察<br/>框架 / 热床 / 龙门 / 打印头"]
-    B --> C["参数化 .forge.js"]
-    C --> D["forgecad run<br/>脚本与参数验证"]
-    C --> E["forgecad render 3d<br/>多视角截图"]
+    A["自然语言需求 / 官方 prompt"] --> B["大模型生成或修改<br/>.forge.js 源码"]
+    B --> C["ForgeCAD 执行脚本<br/>生成几何对象"]
+    C --> D["forgecad run<br/>参数与脚本检查"]
+    C --> E["forgecad render 3d<br/>截图 / GIF 帧"]
     C --> F["forgecad export<br/>STEP / STL / 3MF"]
-    C --> G["forgecad check print<br/>装配边界检查"]
+    C --> G["forgecad check print<br/>制造边界检查"]
 ```
+
+本地复刻脚本按 3D 打印机的真实功能模块拆成多个对象。这里没有把所有零件合并成一个大 `union`，因为官方 GIF 的可读性很依赖局部颜色：黑色框架、银色导轨、蓝色热床、橙色加热板、青色构建体积框和红色料盘都需要单独保留材质。
 
 | 模块 | 脚本对象 | 说明 |
 | --- | --- | --- |
@@ -215,7 +219,7 @@ Bounds: [-102.0,-108.0,-3.0] -> [122.0,116.0,226.0]
 
 视频画面里的键盘很适合补充到本章后半部分。它和 3D 打印机的教学重点不同：3D 打印机强调复杂装配和运动部件，键盘强调规则阵列、外壳倾角、局部强调色和大量重复零件的组织方式。大家可以把它看成 ForgeCAD 的“产品外观 + 参数化阵列”练习。
 
-本章没有直接把视频截图放进仓库，而是新建了 [forgecad_keyboard_demo.forge.js](forgecad_keyboard_demo.forge.js)。脚本里保留了这些可调参数：
+键盘案例采用可复现建模脚本作为主体：[forgecad_keyboard_demo.forge.js](forgecad_keyboard_demo.forge.js)。视频画面用于帮助大家观察外观特征，教程里的结果则由本地脚本重新生成。脚本里保留了这些可调参数：
 
 ```javascript
 const cols = Param.number("Columns", 12, { min: 8, max: 14, unit: "keys" });
@@ -440,23 +444,36 @@ FAIL print.fdm.wall-thickness: 1 object(s) have sampled wall area below 1.2mm.
 
 这个量级对普通笔记本很轻，不需要 6GB 显卡。真正可能吃资源的是更复杂的曲面、布尔操作、超高分辨率网格或浏览器端动画渲染。
 
-## 常见问题
+## 复现边界
 
-### 1. 为什么不直接提交官方源码
+### 1. 官方资产和本地复刻的关系
 
-因为 public kit 当前没有公开 `3dprinter-gpt52codex` 对应的 `.forge.js`。教程只保存官方公开 GIF，并明确说明本地脚本是教学复刻，不把它伪装成官方原始结果。
+本章使用了两类资产。第一类是官方公开资产，例如 `3dprinter-gpt52codex` GIF、`Robot Hand V2` GIF 和 public kit 里的灵巧手源码；这些用于帮助大家对齐官方展示效果。第二类是本地教学复刻脚本，例如 `forgecad_3d_printer_demo.forge.js` 和 `forgecad_keyboard_demo.forge.js`；这些用于让大家真正跑通“需求到源码、源码到 CAD 几何、几何到渲染和导出”的完整链路。
 
-### 2. 为什么不直接把网上视频或截图塞进教程
+其中 3D 打印机 benchmark 当前公开了 GIF 和 prompt，没有公开对应 `.forge.js`。所以本章提供的是对齐官方视觉特征的教学版复刻；灵巧手示例则直接来自 public kit 的官方源码。
 
-教程应该保留可复现链路。这里的官方 GIF 是公开 benchmark 资产，用来说明复刻目标；真正的教学主体是 `forgecad_3d_printer_demo.forge.js`、CLI 命令、渲染图和导出文件。
+### 2. 怎么让大模型生成类似 CAD 模型
 
-### 3. 是否需要 micromamba
+更推荐把需求写成“结构化工程任务”，而不是只说“生成一个好看的 3D 打印机”。例如：
 
-不需要。这个案例只有 Node.js/npm/Chrome。除非后续把 ForgeCAD 和 Python CAD、机器人仿真或学习算法混在同一个实验里，否则没必要为它新建 micromamba 环境。
+```text
+请用 ForgeCAD 编写一个参数化 CoreXY 风格 3D 打印机 .forge.js。
+要求包含：黑色方框机架、蓝色热床、橙色加热板、银色 Z 轴导轨、
+X 轴横梁、打印头、皮带、右上角红色料盘、前方控制盒和青色构建体积框。
+暴露参数：Print Head X、Print Bed Y、Gantry Z、Build Volume Width、Build Volume Depth。
+返回对象要按模块命名，便于 render 时保留材质颜色。
+最后添加 bounding box 和参数范围验证。
+```
 
-### 4. 这个模型能用于真实 3D 打印机设计吗
+大模型生成初稿后，不要把结果当成最终 CAD。正确迭代方式是：运行 `forgecad run` 看脚本是否可执行；渲染 PNG 检查比例和视角；导出 STEP/STL/3MF 检查交换文件；必要时把错误信息或截图反馈给大模型，让它继续修改 `.forge.js`。
 
-不能直接用于真实机器制造。它是教学级参数化装配，用来演示 code-first CAD、复杂结构拆解和 CLI 验证。真实机械设计还要做强度、刚度、传动、公差、采购件、装配和安全检查。
+### 3. 这个流程是否需要 micromamba
+
+本章主线不需要。ForgeCAD 案例只依赖 Node.js/npm 和 Chrome 渲染，不涉及 PyTorch、CUDA 或机器人仿真环境。只有当大家把 ForgeCAD 和 Python CAD、仿真训练、机器人学习算法放进同一个实验工程时，才需要再考虑 micromamba 或 conda 环境隔离。
+
+### 4. 这些模型能直接用于真实制造吗
+
+不能直接用于真实机器制造。它们是教学级参数化装配，用来演示 AI-assisted CAD、code-first CAD、复杂结构拆解、CLI 验证和文件导出。真实机械设计还要继续做强度、刚度、传动、公差、采购件、装配、材料和安全检查。
 
 ## 参考资料
 
