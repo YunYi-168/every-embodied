@@ -204,6 +204,8 @@
 | **第三阶段** | 模仿学习、大模型(VLA/VLN)、Sim2Real | 复现大模型导航VLN、OpenVLA、SmolVLA 等前沿项目，实现仿真或真实部署 |
 
   ## 🔥 News & Highlights
+  - **[2026-06-02]** 新增 [HIMLoco 四足机器人运动控制 Isaac Lab 复现教程](./05-具身场景的深度和强化学习/02HIMLoco-IsaacLab复现/README.md)，覆盖论文方法、原仓库流水线、Blackwell GPU 旧栈排障、Isaac Lab 迁移、smoke test 曲线与本地渲染视频。
+  - **[2026-06-02]** 新增 [Genesis World 1.0 完整体验与机器人仿真流水线](./10-具身智能其他仿真工具及仿真前沿/Genesis仿真环境配置/03Genesis%20World%201.0完整体验与机器人仿真流水线.md)，补充 Genesis World 1.0 环境配置、机器人仿真流程和功能体验记录。
   - **[2026-05-31]** 新增 [ForgeCAD 官方 3D 打印机、键盘与灵巧手案例复现](./21-机械臂和机器人设计/03ForgeCAD视觉逆向工程入门/README.md)，对齐 `KoStard/forgecad-public-kit` 的 `3dprinter-gpt52codex` benchmark，补充视频键盘和官方可动灵巧手，跑通参数渲染 GIF、多视角截图、STEP/STL/3MF 导出和打印检查边界说明。
   - **[2026-05-31]** 新增 [UniLab + MotrixSim 异构机器人 RL 训练复现](./10-具身智能其他仿真工具及仿真前沿/11UniLab-MotrixSim异构RL训练/README.md)，覆盖 6GB 显卡上的 state-based RL 训练、资源占用记录、MotrixSim checkpoint 回放，以及 `uv run --no-sync demo teaser` 的 PBR renderer 多视角截图体验。
   - **[2026-05-14]** 新增 [LingBot-Map 视频流式三维重建教程](./04-具身场景的计算机视觉、3D重建/03-LingBot-Map视频流式三维重建.md)，覆盖官方连续校园场景 smoke test、点云渲染预览、环境配置、代码与论文数据流讲解，以及轻量本地 Web demo。
