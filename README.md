@@ -204,6 +204,7 @@
 | **第三阶段** | 模仿学习、大模型(VLA/VLN)、Sim2Real | 复现大模型导航VLN、OpenVLA、SmolVLA 等前沿项目，实现仿真或真实部署 |
 
   ## 🔥 News & Highlights
+  - **[2026-06-27]** 新增 [Locate Anything 视觉语言定位复现教程](./04-具身场景的计算机视觉、3D重建/04-Locate-Anything视觉语言定位.md)，覆盖 `nvidia/LocateAnything-3B` 本地环境、RTX PRO 6000 Blackwell smoke test、Parallel Box Decoding 原理，以及与 YOLO26n 的同图速度和任务边界对比。
   - **[2026-06-02]** 新增 [RISE 自我改进机器人策略复现教程](./17-具身世界模型/RISE自我改进机器人策略复现/README.md)，覆盖论文方法、组合世界模型流水线、OpenPI policy/value、LTX-Video dynamics model、RLinf imagination RL、Blackwell cu128 环境适配、公开模型资产下载校验，以及官方图与视频素材本地归档。
   - **[2026-06-02]** 新增 [扩散数理基础及问题解析入门](./17-具身世界模型/1、扩散数理基础及问题解析入门/扩散数理基础及问题解析入门.md)，讲解扩散模型需要的数理基础，用简单的代码讲解扩散模型，让大家在不推导复杂公式的前提下，熟悉vae和ddpm，为后续的世界模型学习打下基础。
   - **[2026-06-02]** 新增 [AGILE 人形机器人 Loco-Manipulation Isaac Lab 复现教程](./05-具身场景的深度和强化学习/03AGILE人形机器人Loco-Manipulation复现/README.md)，覆盖官方任务边界、Isaac Sim 5.1 / Isaac Lab 2.3.2 复刻、T1/G1 本地渲染视频、pick-place checkpoint 未随仓库开源说明、评估报告与 Sim2MuJoCo 链路。
@@ -283,7 +284,7 @@
 
   | 章节                   | 关键内容                                       | 状态 |
   | :--------------------- | :--------------------------------------------- | :--- |
-  | **5. 计算机视觉 (CV)** | [目标检测 (YOLO)](./04-具身场景的计算机视觉、3D重建/02-抓取注意力热图.md)、[图像分割 (SAM)](./04-具身场景的计算机视觉、3D重建/01-sam和深度估计.md)、[视频流式三维重建 (LingBot-Map)](./04-具身场景的计算机视觉、3D重建/03-LingBot-Map视频流式三维重建.md)、6D 位姿估计   | ✅    |
+  | **5. 计算机视觉 (CV)** | [目标检测 (YOLO)](./04-具身场景的计算机视觉、3D重建/02-抓取注意力热图.md)、[视觉语言定位 (Locate Anything)](./04-具身场景的计算机视觉、3D重建/04-Locate-Anything视觉语言定位.md)、[图像分割 (SAM)](./04-具身场景的计算机视觉、3D重建/01-sam和深度估计.md)、[视频流式三维重建 (LingBot-Map)](./04-具身场景的计算机视觉、3D重建/03-LingBot-Map视频流式三维重建.md)、6D 位姿估计   | ✅    |
   | **6. 运动与控制**      | 路径规划 (A*/RRT)、轨迹优化、PID 与 MPC 控制、模仿学习 (IL)、[ACT复现](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/04mujoco复现ACT、Pi0、SmolVLA/3.train.ipynb)、[Hand-Eye 标定](./02-机器人基础和控制、手眼协调/补充01手眼协调.md)、AnyGrasp 抓取算法、灵巧手操作   | 🚧    |
   | **7. 强化学习 (RL)**   | [多机器人PPO/SAC 算法详解](./05-具身场景的深度和强化学习/01多机器人搬运家具强化学习.md)、[UniLab + MotrixSim state-based RL 训练](./10-具身智能其他仿真工具及仿真前沿/11UniLab-MotrixSim异构RL训练/README.md)、Isaac Gym 并行训练实战       | ✅    |
   | **8. 仿真环境**        | Isaac Sim 高级渲染、[MuJoCo 物理引擎下OMY/Nova5/Franka机械臂和ACT/Pi0/SmolVLA算法复现](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/04mujoco复现ACT、Pi0、SmolVLA)、[Genie-Sim3教程](./10-具身智能其他仿真工具及仿真前沿/08GenieSim3配置.md)、[MotrixSim PBR teaser 渲染体验](./10-具身智能其他仿真工具及仿真前沿/11UniLab-MotrixSim异构RL训练/README.md#7-扩展体验motrixsim-pbr-teaser-渲染器) | ✅    |
