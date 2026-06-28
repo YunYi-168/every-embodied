@@ -20,7 +20,7 @@ DDPM 最常用的训练目标是：
 
 $$
 \mathcal{L}_{\mathrm{simple}}(\theta)
-=
+{=}
 \mathbb{E}_{t,x_0,\epsilon}
 \left[
 \left\|
@@ -33,7 +33,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon,
@@ -132,7 +132,7 @@ DDPM 把它定义为 Markov chain：
 
 $$
 q(x_{1:T}|x_0)
-=
+{=}
 \prod_{t=1}^{T}
 q(x_t|x_{t-1})
 $$
@@ -143,7 +143,7 @@ Markov chain 的意思是：如果已经知道 $x_{t-1}$，那么生成 $x_t$ �
 
 $$
 q(x_t|x_{t-1})
-=
+{=}
 \mathcal{N}
 \left(
 x_t;
@@ -169,7 +169,7 @@ $$
 $$
 \boxed{
 q(x_t|x_{t-1})
-=
+{=}
 \mathcal{N}
 \left(
 x_t;
@@ -212,7 +212,7 @@ $$
 $$
 \boxed{
 x_t
-=
+{=}
 \sqrt{\alpha_t}x_{t-1}
 +
 \sqrt{1-\alpha_t}\epsilon_t
@@ -235,7 +235,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{1-\beta_t}x_{t-1}
 +
 \sqrt{\beta_t}\epsilon_t
@@ -244,10 +244,10 @@ $$
 那么方差大约是：
 
 $$
-\operatorname{Var}(x_t)
-=
+\mathrm{Var}(x_t)
+{=}
 (1-\beta_t)I+\beta_t I
-=
+{=}
 I
 $$
 
@@ -278,7 +278,7 @@ $$
 $$
 \boxed{
 q(x_t|x_0)
-=
+{=}
 \mathcal{N}
 \left(
 x_t;
@@ -292,7 +292,7 @@ $$
 
 $$
 \bar{\alpha}_t
-=
+{=}
 \prod_{s=1}^{t}\alpha_s
 $$
 
@@ -301,7 +301,7 @@ $$
 $$
 \boxed{
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -322,7 +322,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\alpha_t}x_{t-1}
 +
 \sqrt{1-\alpha_t}\epsilon_t
@@ -332,7 +332,7 @@ $$
 
 $$
 x_{t-1}
-=
+{=}
 \sqrt{\alpha_{t-1}}x_{t-2}
 +
 \sqrt{1-\alpha_{t-1}}\epsilon_{t-1}
@@ -342,7 +342,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\alpha_t}
 \left(
 \sqrt{\alpha_{t-1}}x_{t-2}
@@ -357,7 +357,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\alpha_t\alpha_{t-1}}x_{t-2}
 +
 \sqrt{\alpha_t(1-\alpha_{t-1})}\epsilon_{t-1}
@@ -369,7 +369,7 @@ $$
 
 $$
 \alpha_t(1-\alpha_{t-1})+(1-\alpha_t)
-=
+{=}
 1-\alpha_t\alpha_{t-1}
 $$
 
@@ -377,7 +377,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\alpha_t\alpha_{t-1}}x_{t-2}
 +
 \sqrt{1-\alpha_t\alpha_{t-1}}\epsilon
@@ -387,7 +387,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\alpha_t\alpha_{t-1}\cdots\alpha_1}x_0
 +
 \sqrt{1-\alpha_t\alpha_{t-1}\cdots\alpha_1}\epsilon
@@ -397,7 +397,7 @@ $$
 
 $$
 \bar{\alpha}_t
-=
+{=}
 \alpha_t\alpha_{t-1}\cdots\alpha_1
 $$
 
@@ -405,7 +405,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -417,7 +417,7 @@ $$
 
 $$
 \bar{\alpha}_t
-=
+{=}
 \prod_{s=1}^{t}\alpha_s
 $$
 
@@ -437,7 +437,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -477,7 +477,7 @@ $$
 
 $$
 p_\theta(x_{0:T})
-=
+{=}
 p(x_T)
 \prod_{t=1}^{T}
 p_\theta(x_{t-1}|x_t)
@@ -494,7 +494,7 @@ $$
 $$
 \boxed{
 p_\theta(x_{t-1}|x_t)
-=
+{=}
 \mathcal{N}
 \left(
 x_{t-1};
@@ -529,7 +529,7 @@ $$
 
 $$
 p_\theta(x_0)
-=
+{=}
 \int p_\theta(x_{0:T})dx_{1:T}
 $$
 
@@ -539,10 +539,10 @@ $$
 
 $$
 \mathcal{L}
-=
+{=}
 \mathbb{E}_{q(x_{1:T}|x_0)}
 \left[
--
+{-}
 \log
 \frac{
 p_\theta(x_{0:T})
@@ -556,7 +556,7 @@ $$
 
 $$
 p_\theta(x_{0:T})
-=
+{=}
 p(x_T)
 \prod_{t=1}^{T}
 p_\theta(x_{t-1}|x_t)
@@ -564,7 +564,7 @@ $$
 
 $$
 q(x_{1:T}|x_0)
-=
+{=}
 \prod_{t=1}^{T}
 q(x_t|x_{t-1})
 $$
@@ -574,7 +574,7 @@ $$
 $$
 \boxed{
 \mathcal{L}
-=
+{=}
 \mathbb{E}_q
 \left[
 D_{\mathrm{KL}}
@@ -589,7 +589,7 @@ q(x_{t-1}|x_t,x_0)
 \|
 p_\theta(x_{t-1}|x_t)
 \right)
--
+{-}
 \log p_\theta(x_0|x_1)
 \right]
 }
@@ -649,7 +649,7 @@ $$
 
 $$
 q(x_{t-1}|x_t,x_0)
-=
+{=}
 \frac{
 q(x_t|x_{t-1},x_0)
 q(x_{t-1}|x_0)
@@ -662,7 +662,7 @@ $$
 
 $$
 q(x_t|x_{t-1},x_0)
-=
+{=}
 q(x_t|x_{t-1})
 $$
 
@@ -670,7 +670,7 @@ $$
 
 $$
 q(x_{t-1}|x_t,x_0)
-=
+{=}
 \frac{
 q(x_t|x_{t-1})
 q(x_{t-1}|x_0)
@@ -684,7 +684,7 @@ $$
 $$
 \boxed{
 q(x_{t-1}|x_t,x_0)
-=
+{=}
 \mathcal{N}
 \left(
 x_{t-1};
@@ -699,7 +699,7 @@ $$
 $$
 \boxed{
 \tilde{\mu}_t(x_t,x_0)
-=
+{=}
 \frac{
 \sqrt{\bar{\alpha}_{t-1}}\beta_t
 }{
@@ -721,7 +721,7 @@ $$
 $$
 \boxed{
 \tilde{\beta}_t
-=
+{=}
 \frac{
 1-\bar{\alpha}_{t-1}
 }{
@@ -741,7 +741,7 @@ $$
 
 $$
 p_\theta(x_{t-1}|x_t)
-=
+{=}
 \mathcal{N}
 \left(
 x_{t-1};
@@ -754,13 +754,13 @@ $$
 
 $$
 L_{t-1}
-=
+{=}
 \mathbb{E}_q
 \left[
 \frac{1}{2\sigma_t^2}
 \left\|
 \tilde{\mu}_t(x_t,x_0)
--
+{-}
 \mu_\theta(x_t,t)
 \right\|^2
 \right]
@@ -798,7 +798,7 @@ $$
 
 $$
 \tilde{\mu}_t(x_t,x_0)
-=
+{=}
 A_tx_0+B_tx_t
 $$
 
@@ -806,7 +806,7 @@ $$
 
 $$
 A_t
-=
+{=}
 \frac{
 \sqrt{\bar{\alpha}_{t-1}}\beta_t
 }{
@@ -816,7 +816,7 @@ $$
 
 $$
 B_t
-=
+{=}
 \frac{
 \sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})
 }{
@@ -834,7 +834,7 @@ $$
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \tilde{\mu}_t
 \left(
 x_t,
@@ -850,7 +850,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -860,7 +860,7 @@ $$
 
 $$
 x_0
-=
+{=}
 \frac{
 x_t-\sqrt{1-\bar{\alpha}_t}\epsilon
 }{
@@ -879,7 +879,7 @@ $$
 $$
 \boxed{
 x_{0,\theta}(x_t,t)
-=
+{=}
 \frac{
 x_t-\sqrt{1-\bar{\alpha}_t}\epsilon_\theta(x_t,t)
 }{
@@ -893,11 +893,11 @@ $$
 $$
 \boxed{
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 \left(
 x_t
--
+{-}
 \frac{
 \beta_t
 }{
@@ -924,7 +924,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -950,11 +950,11 @@ $$
 
 $$
 \tilde{\mu}_t(x_t,x_0)
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 \left(
 x_t
--
+{-}
 \frac{
 \beta_t
 }{
@@ -968,11 +968,11 @@ $$
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 \left(
 x_t
--
+{-}
 \frac{
 \beta_t
 }{
@@ -986,9 +986,9 @@ $$
 
 $$
 \tilde{\mu}_t(x_t,x_0)
--
+{-}
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{
 \beta_t
 }{
@@ -1004,10 +1004,10 @@ $$
 $$
 \left\|
 \tilde{\mu}_t(x_t,x_0)
--
+{-}
 \mu_\theta(x_t,t)
 \right\|^2
-=
+{=}
 \frac{
 \beta_t^2
 }{
@@ -1022,7 +1022,7 @@ $$
 
 $$
 L_{t-1}
-=
+{=}
 \mathbb{E}
 \left[
 \frac{
@@ -1043,7 +1043,7 @@ DDPM 实践中常使用简化目标，去掉复杂权重：
 $$
 \boxed{
 \mathcal{L}_{\mathrm{simple}}(\theta)
-=
+{=}
 \mathbb{E}_{t,x_0,\epsilon}
 \left[
 \left\|
@@ -1058,7 +1058,7 @@ $$
 $$
 \boxed{
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -1093,7 +1093,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -1125,7 +1125,7 @@ $$
 
 $$
 x_{t-1}
-=
+{=}
 \mu_\theta(x_t,t)
 +
 \sigma_tz
@@ -1142,11 +1142,11 @@ $$
 $$
 \boxed{
 x_{t-1}
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 \left(
 x_t
--
+{-}
 \frac{
 \beta_t
 }{
@@ -1387,7 +1387,7 @@ def _extract(self, values: torch.Tensor, t: torch.Tensor, x: torch.Tensor) -> to
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -1441,7 +1441,7 @@ for x0, _ in train_loader:
 
 $$
 \mathcal{L}_{\mathrm{simple}}(\theta)
-=
+{=}
 \mathbb{E}_{t,x_0,\epsilon}
 \left[
 \left\|
@@ -1525,11 +1525,11 @@ def sample(self, model: nn.Module, shape: tuple[int, int, int, int]) -> torch.Te
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 \left(
 x_t
--
+{-}
 \frac{\beta_t}{\sqrt{1-\bar{\alpha}_t}}
 \epsilon_\theta(x_t,t)
 \right)
@@ -1590,7 +1590,7 @@ python generate_stl10_ddpm.py --checkpoint checkpoints/stl10_ddpm.pt --out outpu
 
 $$
 q(x_t|x_{t-1})
-=
+{=}
 \mathcal{N}
 \left(
 x_t;
@@ -1611,7 +1611,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -1625,11 +1625,11 @@ $$
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 \left(
 x_t
--
+{-}
 \frac{
 \beta_t
 }{
@@ -1679,7 +1679,7 @@ DDPM 的核心逻辑是：
 
 $$
 q(x_t|x_{t-1})
-=
+{=}
 \mathcal{N}
 \left(
 x_t;
@@ -1692,7 +1692,7 @@ $$
 
 $$
 x_t
-=
+{=}
 \sqrt{\bar{\alpha}_t}x_0
 +
 \sqrt{1-\bar{\alpha}_t}\epsilon
@@ -1702,7 +1702,7 @@ $$
 
 $$
 p_\theta(x_{t-1}|x_t)
-=
+{=}
 \mathcal{N}
 \left(
 x_{t-1};
@@ -1727,7 +1727,7 @@ $$
 $$
 \boxed{
 \mathcal{L}_{\mathrm{simple}}(\theta)
-=
+{=}
 \mathbb{E}_{t,x_0,\epsilon}
 \left[
 \left\|
@@ -1764,10 +1764,10 @@ DDPM 最小化负 ELBO：
 
 $$
 \mathcal{L}
-=
+{=}
 \mathbb{E}_{q(x_{1:T}|x_0)}
 \left[
--
+{-}
 \log
 \frac{
 p_\theta(x_{0:T})
@@ -1781,7 +1781,7 @@ $$
 
 $$
 p_\theta(x_{0:T})
-=
+{=}
 p(x_T)
 \prod_{t=1}^{T}
 p_\theta(x_{t-1}|x_t)
@@ -1791,7 +1791,7 @@ $$
 
 $$
 q(x_{1:T}|x_0)
-=
+{=}
 \prod_{t=1}^{T}
 q(x_t|x_{t-1})
 $$
@@ -1800,10 +1800,10 @@ $$
 
 $$
 \mathcal{L}
-=
+{=}
 \mathbb{E}_q
 \left[
--
+{-}
 \log
 \frac{
 p(x_T)
@@ -1820,12 +1820,12 @@ $$
 
 $$
 \mathcal{L}
-=
+{=}
 \mathbb{E}_q
 \left[
--
+{-}
 \log p(x_T)
--
+{-}
 \sum_{t=1}^{T}
 \log p_\theta(x_{t-1}|x_t)
 +
@@ -1838,7 +1838,7 @@ $$
 
 $$
 q(x_{t-1}|x_t,x_0)
-=
+{=}
 \frac{
 q(x_t|x_{t-1})q(x_{t-1}|x_0)
 }{
@@ -1850,7 +1850,7 @@ $$
 
 $$
 q(x_t|x_{t-1})
-=
+{=}
 \frac{
 q(x_{t-1}|x_t,x_0)q(x_t|x_0)
 }{
@@ -1862,17 +1862,17 @@ $$
 
 $$
 \mathcal{L}
-=
+{=}
 \mathbb{E}_q
 \left[
--
+{-}
 \log
 \frac{
 p(x_T)
 }{
 q(x_T|x_0)
 }
--
+{-}
 \sum_{t>1}
 \log
 \frac{
@@ -1880,7 +1880,7 @@ p_\theta(x_{t-1}|x_t)
 }{
 q(x_{t-1}|x_t,x_0)
 }
--
+{-}
 \log p_\theta(x_0|x_1)
 \right]
 $$
@@ -1890,7 +1890,7 @@ $$
 $$
 \boxed{
 \mathcal{L}
-=
+{=}
 \mathbb{E}_q
 \left[
 D_{\mathrm{KL}}
@@ -1905,7 +1905,7 @@ q(x_{t-1}|x_t,x_0)
 \|
 p_\theta(x_{t-1}|x_t)
 \right)
--
+{-}
 \log p_\theta(x_0|x_1)
 \right]
 }
@@ -1941,7 +1941,7 @@ $$
 
 $$
 q(x_t|z)
-=
+{=}
 \mathcal{N}
 \left(
 x_t;
@@ -1952,7 +1952,7 @@ $$
 
 $$
 q(z|x_0)
-=
+{=}
 \mathcal{N}
 \left(
 z;
@@ -1968,12 +1968,12 @@ q(z|x_t,x_0)
 \propto
 \exp
 \left(
--
+{-}
 \frac{1}{2\beta_t}
 \left\|
 x_t-\sqrt{\alpha_t}z
 \right\|^2
--
+{-}
 \frac{1}{2(1-\bar{\alpha}_{t-1})}
 \left\|
 z-\sqrt{\bar{\alpha}_{t-1}}x_0
@@ -1987,9 +1987,9 @@ $$
 \left\|
 x_t-\sqrt{\alpha_t}z
 \right\|^2
-=
+{=}
 \left\|x_t\right\|^2
--
+{-}
 2\sqrt{\alpha_t}x_t^\top z
 +
 \alpha_t\left\|z\right\|^2
@@ -1998,7 +1998,7 @@ $$
 与 $z$ 有关的部分是：
 
 $$
--
+{-}
 \frac{\alpha_t}{2\beta_t}
 \left\|z\right\|^2
 +
@@ -2012,9 +2012,9 @@ $$
 \left\|
 z-\sqrt{\bar{\alpha}_{t-1}}x_0
 \right\|^2
-=
+{=}
 \left\|z\right\|^2
--
+{-}
 2\sqrt{\bar{\alpha}_{t-1}}x_0^\top z
 +
 \bar{\alpha}_{t-1}
@@ -2024,7 +2024,7 @@ $$
 与 $z$ 有关的部分是：
 
 $$
--
+{-}
 \frac{1}{2(1-\bar{\alpha}_{t-1})}
 \left\|z\right\|^2
 +
@@ -2036,8 +2036,8 @@ $$
 
 $$
 \log q(z|x_t,x_0)
-=
--
+{=}
+{-}
 \frac{1}{2}
 \left(
 \frac{\alpha_t}{\beta_t}
@@ -2059,8 +2059,8 @@ $$
 
 $$
 \log\mathcal{N}(z;\mu,\Sigma)
-=
--
+{=}
+{-}
 \frac{1}{2}
 z^\top\Sigma^{-1}z
 +
@@ -2073,7 +2073,7 @@ $$
 
 $$
 \Sigma^{-1}
-=
+{=}
 \left(
 \frac{\alpha_t}{\beta_t}
 +
@@ -2085,7 +2085,7 @@ $$
 
 $$
 \Sigma
-=
+{=}
 \left(
 \frac{\alpha_t}{\beta_t}
 +
@@ -2097,7 +2097,7 @@ $$
 
 $$
 \Sigma
-=
+{=}
 \frac{
 \beta_t(1-\bar{\alpha}_{t-1})
 }{
@@ -2122,7 +2122,7 @@ $$
 
 $$
 \alpha_t(1-\bar{\alpha}_{t-1})+\beta_t
-=
+{=}
 1-\bar{\alpha}_t
 $$
 
@@ -2130,7 +2130,7 @@ $$
 
 $$
 \Sigma
-=
+{=}
 \frac{
 \beta_t(1-\bar{\alpha}_{t-1})
 }{
@@ -2144,7 +2144,7 @@ $$
 $$
 \boxed{
 \tilde{\beta}_t
-=
+{=}
 \frac{
 1-\bar{\alpha}_{t-1}
 }{
@@ -2158,7 +2158,7 @@ $$
 
 $$
 \Sigma^{-1}\mu
-=
+{=}
 \frac{\sqrt{\alpha_t}}{\beta_t}x_t
 +
 \frac{\sqrt{\bar{\alpha}_{t-1}}}{1-\bar{\alpha}_{t-1}}x_0
@@ -2168,7 +2168,7 @@ $$
 
 $$
 \mu
-=
+{=}
 \Sigma
 \left(
 \frac{\sqrt{\alpha_t}}{\beta_t}x_t
@@ -2181,7 +2181,7 @@ $$
 
 $$
 \mu
-=
+{=}
 \frac{
 \beta_t(1-\bar{\alpha}_{t-1})
 }{
@@ -2198,7 +2198,7 @@ $$
 
 $$
 \mu
-=
+{=}
 \frac{
 \sqrt{\alpha_t}(1-\bar{\alpha}_{t-1})
 }{
@@ -2219,7 +2219,7 @@ $$
 $$
 \boxed{
 \tilde{\mu}_t(x_t,x_0)
-=
+{=}
 \frac{
 \sqrt{\bar{\alpha}_{t-1}}\beta_t
 }{
@@ -2244,7 +2244,7 @@ $$
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{
 \sqrt{\bar{\alpha}_{t-1}}\beta_t
 }{
@@ -2264,7 +2264,7 @@ $$
 
 $$
 x_{0,\theta}(x_t,t)
-=
+{=}
 \frac{
 x_t-\sqrt{1-\bar{\alpha}_t}\epsilon_\theta(x_t,t)
 }{
@@ -2276,7 +2276,7 @@ $$
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{
 \sqrt{\bar{\alpha}_{t-1}}\beta_t
 }{
@@ -2311,7 +2311,7 @@ $$
 }{
 \sqrt{\bar{\alpha}_t}
 }
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 $$
 
@@ -2319,14 +2319,14 @@ $$
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{
 \beta_t
 }{
 \sqrt{\alpha_t}(1-\bar{\alpha}_t)
 }
 x_t
--
+{-}
 \frac{
 \beta_t
 }{
@@ -2384,9 +2384,9 @@ $$
 
 $$
 \beta_t+\alpha_t(1-\bar{\alpha}_{t-1})
-=
+{=}
 \beta_t+\alpha_t-\alpha_t\bar{\alpha}_{t-1}
-=
+{=}
 1-\bar{\alpha}_t
 $$
 
@@ -2400,9 +2400,9 @@ $$
 
 $$
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}x_t
--
+{-}
 \frac{
 \beta_t
 }{
@@ -2416,11 +2416,11 @@ $$
 $$
 \boxed{
 \mu_\theta(x_t,t)
-=
+{=}
 \frac{1}{\sqrt{\alpha_t}}
 \left(
 x_t
--
+{-}
 \frac{
 \beta_t
 }{
