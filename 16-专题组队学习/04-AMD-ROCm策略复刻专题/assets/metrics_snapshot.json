@@ -1,0 +1,81 @@
+{
+  "smolvla_forced_instruction_n10": [
+    {
+      "label": "baseline",
+      "red_rate": 0.8,
+      "red_text": "8/10",
+      "blue_rate": 0.0,
+      "blue_text": "0/10"
+    },
+    {
+      "label": "copy 1.5x",
+      "red_rate": 0.3,
+      "red_text": "3/10",
+      "blue_rate": 0.7,
+      "blue_text": "7/10"
+    },
+    {
+      "label": "copy 2x",
+      "red_rate": 0.4,
+      "red_text": "4/10",
+      "blue_rate": 0.8,
+      "blue_text": "8/10"
+    },
+    {
+      "label": "copy 3x",
+      "red_rate": 0.2,
+      "red_text": "2/10",
+      "blue_rate": 0.8,
+      "blue_text": "8/10"
+    },
+    {
+      "label": "weighted 1k",
+      "red_rate": 0.6,
+      "red_text": "6/10",
+      "blue_rate": 0.9,
+      "blue_text": "9/10"
+    },
+    {
+      "label": "weighted 500",
+      "red_rate": 0.8,
+      "red_text": "8/10",
+      "blue_rate": 1.0,
+      "blue_text": "10/10"
+    }
+  ],
+  "act_progress": [
+    {
+      "label": "clean closed-loop",
+      "success": 0,
+      "total": 10,
+      "rate": 0.0
+    },
+    {
+      "label": "time offset",
+      "success": 3,
+      "total": 15,
+      "rate": 0.2
+    },
+    {
+      "label": "downweight DAgger",
+      "success": 13,
+      "total": 30,
+      "rate": 0.43333333333333335
+    },
+    {
+      "label": "best DAgger",
+      "success": 17,
+      "total": 30,
+      "rate": 0.5666666666666667
+    }
+  ],
+  "best_summary": {
+    "act_best_dagger": {
+      "physical_success": "17/30"
+    },
+    "smolvla_weighted_blue2_step500_expand30": {
+      "physical_success": "53/60"
+    },
+    "pi0": "pending smoke/train verification"
+  }
+}
