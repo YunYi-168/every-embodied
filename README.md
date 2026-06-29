@@ -37,6 +37,8 @@
     <img src="./assets/shanghaiailab.png" height="45" style="margin: 0 10px;"> 
     <img src="./assets/damo1.png" height="52" style="margin: 0 10px;"> 
     <img src="./assets/damo2.png" height="50" style="margin: 0 10px;"> 
+    <img src="./assets/amd-logo.svg" height="30" style="margin: 0 12px;" alt="AMD">
+    <img src="./assets/rocm-logo.png" height="34" style="margin: 0 12px;" alt="ROCm">
   </div>
 
 </div>
@@ -204,6 +206,7 @@
 | **第三阶段** | 模仿学习、大模型(VLA/VLN)、Sim2Real | 复现大模型导航VLN、OpenVLA、SmolVLA 等前沿项目，实现仿真或真实部署 |
 
   ## 🔥 News & Highlights
+  - **[2026-06-29]** 新增 [AMD ROCm 策略复刻专题](./16-专题组队学习/04-AMD-ROCm策略复刻专题/README.md)，基于 AMD Ryzen AI MAX+ / ROCm 设备复刻 MuJoCo 抓杯任务，整理 ACT DAgger 诊断、SmolVLA 红/蓝杯加权采样、pi_0 权限 smoke test 与训练门控，并配套 Notebook、成功率图表和成功/失败关键帧，方便大家从排障过程学会在 AMD 平台上迁移具身策略。
   - **[2026-06-27]** 新增 [Locate Anything 视觉语言定位复现教程](./04-具身场景的计算机视觉、3D重建/04-Locate-Anything视觉语言定位.md)，覆盖 `nvidia/LocateAnything-3B` 本地环境、RTX PRO 6000 Blackwell smoke test、Parallel Box Decoding 原理，以及与 YOLO26n 的同图速度和任务边界对比。
   - **[2026-06-02]** 新增 [RISE 自我改进机器人策略复现教程](./17-具身世界模型/RISE自我改进机器人策略复现/README.md)，覆盖论文方法、组合世界模型流水线、OpenPI policy/value、LTX-Video dynamics model、RLinf imagination RL、Blackwell cu128 环境适配、公开模型资产下载校验，以及官方图与视频素材本地归档。
   - **[2026-06-02]** 新增 [扩散数理基础及问题解析入门](./17-具身世界模型/1、扩散数理基础及问题解析入门/扩散数理基础及问题解析入门.md)，讲解扩散模型需要的数理基础，用简单的代码讲解扩散模型，让大家在不推导复杂公式的前提下，熟悉vae和ddpm，为后续的世界模型学习打下基础。
@@ -376,4 +379,3 @@
   <br />
   你可以自由分享与改编本项目内容，但需保留来源署名。详细条款见 <a href="LICENSE">LICENSE</a>。
   </div>
-
