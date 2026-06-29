@@ -206,8 +206,11 @@
 | **第三阶段** | 模仿学习、大模型(VLA/VLN)、Sim2Real | 复现大模型导航VLN、OpenVLA、SmolVLA 等前沿项目，实现仿真或真实部署 |
 
   ## 🔥 News & Highlights
+  - **[2026-06-29]** 新增 [EventVLA 视觉证据记忆](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/06EventVLA视觉证据记忆导读/README.md)、[WALL-OSS 开源 VLA 模型](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/07WALL-OSS开源VLA模型导读/README.md)、[WALL-X 工程框架导航](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/08WALL-X开源工程框架导航/README.md) 与 [WALL-WM 事件级世界动作模型](./17-具身世界模型/WALL-WM事件级世界动作模型导读/README.md)：前三篇归入现有 VLA 章节，WALL-WM 归入世界模型章节，分别补充官方图解、开源地址、权重/数据入口和当前适合的复现边界。
   - **[2026-06-29]** 新增 [AMD ROCm 策略复刻专题](./16-专题组队学习/04-AMD-ROCm策略复刻专题/README.md)，基于 AMD Ryzen AI MAX+ / ROCm 设备复刻 MuJoCo 抓杯任务，整理 ACT DAgger 诊断、SmolVLA 红/蓝杯加权采样、pi_0 权限 smoke test 与训练门控，并配套 Notebook、成功率图表和成功/失败关键帧，方便大家从排障过程学会在 AMD 平台上迁移具身策略。
   - **[2026-06-27]** 新增 [Locate Anything 视觉语言定位复现教程](./04-具身场景的计算机视觉、3D重建/04-Locate-Anything视觉语言定位.md)，覆盖 `nvidia/LocateAnything-3B` 本地环境、RTX PRO 6000 Blackwell smoke test、Parallel Box Decoding 原理，以及与 YOLO26n 的同图速度和任务边界对比。
+  - **[2026-06-27]** 新增 [WoG 条件空间世界模型导读](./17-具身世界模型/WoG条件空间世界模型导读/README.md)，系统拆解 ByteDance Seed 与港大提出的 *World Guidance*：从总览图、两阶段训练、Future Encoder、Q-Former query、condition alignment 到 SIMPLER/真机/人类视频实验，重点说明它不是可 rollout 的传统世界模型，而是把未来观测蒸馏成动作相关 latent condition 来增强 VLA 动作生成。
+  - **[2026-06-27]** 新增 [RAW-Dream 任务无关世界模型强化 VLA 导读](./17-具身世界模型/RAW-Dream任务无关世界模型强化VLA/README.md)，梳理微软等作者的 *Reinforcing VLAs in Task-Agnostic World Models*：明确不是 pi0.5 基座，而是 OpenVLA-OFT + Wan 2.1 world model + Qwen3-VL reward + GRPO 的后训练范式，并补充 DNV 技巧、LIBERO/真机评测边界和可继续追踪的开源仓库。
   - **[2026-06-02]** 新增 [RISE 自我改进机器人策略复现教程](./17-具身世界模型/RISE自我改进机器人策略复现/README.md)，覆盖论文方法、组合世界模型流水线、OpenPI policy/value、LTX-Video dynamics model、RLinf imagination RL、Blackwell cu128 环境适配、公开模型资产下载校验，以及官方图与视频素材本地归档。
   - **[2026-06-02]** 新增 [扩散数理基础及问题解析入门](./17-具身世界模型/1、扩散数理基础及问题解析入门/扩散数理基础及问题解析入门.md)，讲解扩散模型需要的数理基础，用简单的代码讲解扩散模型，让大家在不推导复杂公式的前提下，熟悉vae和ddpm，为后续的世界模型学习打下基础。
   - **[2026-06-02]** 新增 [AGILE 人形机器人 Loco-Manipulation Isaac Lab 复现教程](./05-具身场景的深度和强化学习/03AGILE人形机器人Loco-Manipulation复现/README.md)，覆盖官方任务边界、Isaac Sim 5.1 / Isaac Lab 2.3.2 复刻、T1/G1 本地渲染视频、pick-place checkpoint 未随仓库开源说明、评估报告与 Sim2MuJoCo 链路。
@@ -297,9 +300,10 @@
 | 章节                  | 关键内容                                    | 状态 |
 | :-------------------- | :------------------------------------------ | :--- |
 | **9. 具身智能benchmark和数据讲解** | [LIBERO](./09-具身智能数据及评估基准benchmark/01-libero.md)、[SimplerENV](./09-具身智能数据及评估基准benchmark/02-simplerenv.md)       | ✅    |
-| **10. VLA 大模型**    | [SmolVLA 训练和部署](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/01SmolVLA-LIBERO/01SmolVLA-libero.md)、[OpenVLA部署](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/02OpenVLA复现/02openvla复现.md)、[DiT4DiT-LIBERO 训练与评估](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/05DiT4DiT-LIBERO/01DiT4DiT-LIBERO训练与评估.md)、[RT-1 / RT-2 / RT-X 论文解读与代码分析](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/03RT系列论文解读与代码分析/01RT系列论文解读与代码分析.md)  | ✅    |
-| **11. VLN 大模型**    | [VLN概念基础](./08-具身导航及VLN/03前沿VLN复现/01VLNCE/02ETPNav代码复现.md)、[ETPNav](./08-具身导航及VLN/03前沿VLN复现/01VLNCE/02ETPNav代码复现.md)  | ✅    |
-| **12. 综合项目复现** | [无人机多模态LLM导航](./13-其他前沿项目复现/无人机大模型+Groundingdino实践/无人机多模态大模型.md)| ✅    |
+| **10. VLA 大模型**    | [SmolVLA 训练和部署](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/01SmolVLA-LIBERO/01SmolVLA-libero.md)、[OpenVLA部署](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/02OpenVLA复现/02openvla复现.md)、[DiT4DiT-LIBERO 训练与评估](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/05DiT4DiT-LIBERO/01DiT4DiT-LIBERO训练与评估.md)、[RT-1 / RT-2 / RT-X 论文解读与代码分析](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/03RT系列论文解读与代码分析/01RT系列论文解读与代码分析.md)、[EventVLA 视觉证据记忆](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/06EventVLA视觉证据记忆导读/README.md)、[WALL-OSS 开源 VLA 模型](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/07WALL-OSS开源VLA模型导读/README.md)、[WALL-X 工程框架导航](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/08WALL-X开源工程框架导航/README.md)  | ✅    |
+| **11. 具身世界模型** | [LeWM 世界模型分析解读与实验复现](./17-具身世界模型/Leworldmodel分析解读与实验复现/Leworldmodel分析解读与实验复现.md)、[RAW-Dream 任务无关世界模型强化 VLA 导读](./17-具身世界模型/RAW-Dream任务无关世界模型强化VLA/README.md)、[WoG 条件空间世界模型导读](./17-具身世界模型/WoG条件空间世界模型导读/README.md)、[WALL-WM 事件级世界动作模型](./17-具身世界模型/WALL-WM事件级世界动作模型导读/README.md) | ✅    |
+| **12. VLN 大模型**    | [VLN概念基础](./08-具身导航及VLN/03前沿VLN复现/01VLNCE/02ETPNav代码复现.md)、[ETPNav](./08-具身导航及VLN/03前沿VLN复现/01VLNCE/02ETPNav代码复现.md)  | ✅    |
+| **13. 综合项目复现** | [无人机多模态LLM导航](./13-其他前沿项目复现/无人机大模型+Groundingdino实践/无人机多模态大模型.md)| ✅    |
 
   ### 四、专题组队学习 - 面向活动组织与专题共学
 

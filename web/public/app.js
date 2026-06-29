@@ -138,6 +138,18 @@ const homeModules = [
         doc: "06-策略抓取或抓取VLA/01VLA相关总结综述.md",
       },
       {
+        title: "EventVLA 视觉证据记忆",
+        copy: "理解长时域 VLA 如何保存关键视觉证据。",
+        image: "06-策略抓取或抓取VLA/大模型控制、VLA、VLM/06EventVLA视觉证据记忆导读/assets/eventvla_framework.png",
+        doc: "06-策略抓取或抓取VLA/大模型控制、VLA、VLM/06EventVLA视觉证据记忆导读/README.md",
+      },
+      {
+        title: "WALL-OSS 与 WALL-X",
+        copy: "梳理开源 VLA 模型、权重和工程复现入口。",
+        image: "06-策略抓取或抓取VLA/大模型控制、VLA、VLM/07WALL-OSS开源VLA模型导读/assets/walloss_lerobot_overview.png",
+        doc: "06-策略抓取或抓取VLA/大模型控制、VLA、VLM/07WALL-OSS开源VLA模型导读/README.md",
+      },
+      {
         title: "春晚舞蹈机器人复刻",
         copy: "把动作迁移到机器人仿真，理解运动控制实践。",
         image: "assets/chunwan_robot.gif",
@@ -157,6 +169,24 @@ const homeModules = [
         copy: "从论文解读到复现实验，理解具身世界模型。",
         image: "17-具身世界模型/Leworldmodel分析解读与实验复现/assets/lewm.png",
         doc: "17-具身世界模型/Leworldmodel分析解读与实验复现/Leworldmodel分析解读与实验复现.md",
+      },
+      {
+        title: "RAW-Dream 任务无关世界模型强化 VLA",
+        copy: "读懂 OpenVLA-OFT、Wan 2.1 和 Qwen3-VL 组成的 VLA 后训练范式。",
+        image: "17-具身世界模型/RAW-Dream任务无关世界模型强化VLA/assets/motivation.png",
+        doc: "17-具身世界模型/RAW-Dream任务无关世界模型强化VLA/README.md",
+      },
+      {
+        title: "WoG 条件空间世界模型导读",
+        copy: "拆解未来观测如何被蒸馏成动作相关 latent condition。",
+        image: "17-具身世界模型/WoG条件空间世界模型导读/assets/pipe.png",
+        doc: "17-具身世界模型/WoG条件空间世界模型导读/README.md",
+      },
+      {
+        title: "WALL-WM 事件级世界动作模型",
+        copy: "理解如何按语义事件边界预演未来视频与动作。",
+        image: "17-具身世界模型/WALL-WM事件级世界动作模型导读/assets/wallwm_framework.png",
+        doc: "17-具身世界模型/WALL-WM事件级世界动作模型导读/README.md",
       },
       {
         title: "ManiSkill 强化学习",
