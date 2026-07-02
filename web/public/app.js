@@ -189,6 +189,12 @@ const homeModules = [
         doc: "17-具身世界模型/WALL-WM事件级世界动作模型导读/README.md",
       },
       {
+        title: "RoboDream 可组合世界模型",
+        copy: "理解 robot-only 轨迹、场景先验和物体先验如何合成机器人示教数据。",
+        image: "17-具身世界模型/RoboDream可组合世界模型数据合成导读/assets/robodream_architecture.png",
+        doc: "17-具身世界模型/RoboDream可组合世界模型数据合成导读/README.md",
+      },
+      {
         title: "ManiSkill 强化学习",
         copy: "学习任务、数据集和强化学习实验如何连接仿真世界。",
         image: "10-具身智能其他仿真工具及仿真前沿/assets/2025-03-07-16-20-07-e32f0eaa26b84a2f2dfa61d5d594f7e.png",
