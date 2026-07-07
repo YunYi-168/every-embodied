@@ -206,6 +206,7 @@
 | **第三阶段** | 模仿学习、大模型(VLA/VLN)、Sim2Real | 复现大模型导航VLN、OpenVLA、SmolVLA 等前沿项目，实现仿真或真实部署 |
 
   ## 🔥 News & Highlights
+  - **[2026-07-07]** 新增 [Datawhale 具身智能零基础入门组队学习路径 v6](./19-Datawhale每月组队学习/06组队学习路径v6.md)：基于最近新增的世界模型、VLA 前沿、Locate Anything 视觉语言定位、LingBot-Map 三维重建、Build123d / Text-to-CAD / ForgeCAD 代码建模、SIM1、UniLab + MotrixSim 与 AMD ROCm 专题，重新组织 20 天组队学习路线，分为“操作模型/VLA/世界模型”“视觉/3D/CAD”“仿真/硬件/系统部署”三条主线。
   - **[2026-07-02]** 新增 [RoboDream 可组合世界模型数据合成导读](./17-具身世界模型/RoboDream可组合世界模型数据合成导读/README.md)，放入 `17-具身世界模型` 前沿导读线：系统拆解 USC PSI Lab 与 TRI 提出的 *Compositional World Models for Scalable Robot Data Synthesis*，重点讲清它不是可实时 `step(action)` 的神经仿真器，而是基于 robot-only 轨迹、scene prior、object prior 的机器人示教视频合成数据引擎；教程补充官方架构图、prior extraction、retrieval and rebirth、prop-free teleoperation、真实机器人实验表和当前代码开源边界。
   - **[2026-06-29]** 新增 [EventVLA 视觉证据记忆](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/06EventVLA视觉证据记忆导读/README.md)、[WALL-OSS 开源 VLA 模型](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/07WALL-OSS开源VLA模型导读/README.md)、[WALL-X 工程框架导航](./06-策略抓取或抓取VLA/大模型控制、VLA、VLM/08WALL-X开源工程框架导航/README.md) 与 [WALL-WM 事件级世界动作模型](./17-具身世界模型/WALL-WM事件级世界动作模型导读/README.md)：前三篇归入现有 VLA 章节，WALL-WM 归入世界模型章节，分别补充官方图解、开源地址、权重/数据入口和当前适合的复现边界。
   - **[2026-06-29]** 新增 [AMD ROCm 策略复刻专题](./16-专题组队学习/04-AMD-ROCm策略复刻专题/README.md)，基于 AMD Ryzen AI MAX+ / ROCm 设备复刻 MuJoCo 抓杯任务，整理 ACT DAgger 诊断、SmolVLA 红/蓝杯加权采样、pi_0 权限 smoke test 与训练门控，并配套 Notebook、成功率图表和成功/失败关键帧，方便大家从排障过程学会在 AMD 平台上迁移具身策略。
@@ -310,7 +311,8 @@
 
 | 专题 | 关键内容 | 状态 |
 | :--- | :--- | :--- |
-| **16. 达摩院组队学习专题** | [专题导航](./16-专题组队学习/01-达摩院组队学习/README.md)、[组织学习方案](./16-专题组队学习/01-达摩院组队学习/01-组织学习方案.md)、[学习任务安排](./16-专题组队学习/01-达摩院组队学习/02-学习任务安排.md)、[乐云平台体验指引](./16-专题组队学习/01-达摩院组队学习/04-乐云平台体验指引.md) | ✅ |
+| **19. Datawhale 每月组队学习路径** | [具身智能零基础入门 v6](./19-Datawhale每月组队学习/06组队学习路径v6.md)、[v5 旧版路径](./19-Datawhale每月组队学习/05组队学习路径v5.md) | ✅ |
+| **16. 达摩院组队学习专题** | [专题导航](./16-专题组队学习/01-达摩院组队学习/README.md)、[Task01 理论与趋势](./16-专题组队学习/01-达摩院组队学习/Task%2001_理论与趋势.md)、[Task02 技术透视](./16-专题组队学习/01-达摩院组队学习/Task%2002_技术透视.md)、[Task03 演示实操](./16-专题组队学习/01-达摩院组队学习/Task%2003_详细演示实操%20-%20从想法到实现.md)、[Task04 总结分享](./16-专题组队学习/01-达摩院组队学习/Task%2004_总结分享.md) | ✅ |
 
   ## 🛠️ 环境要求
 
