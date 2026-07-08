@@ -28,7 +28,7 @@ Place the blue mug on the plate.
 
 ![SmolVLA 红杯蓝杯固定指令成功率](./assets/smolvla_red_blue_success.png)
 
-图 1：SmolVLA 在红杯、蓝杯固定指令上的 `physical_success` 对比。大家需要观察的是“蓝杯提升是否牺牲红杯”，而不是只追求单一颜色最高成功率。
+图 1：SmolVLA 在红杯、蓝杯固定指令上的 `physical_success` 对比。关键不是只追求单一颜色最高成功率，而是看“蓝杯提升是否牺牲红杯”。
 
 ## 为什么不直接复制数据
 
@@ -43,9 +43,49 @@ Place the blue mug on the plate.
 | 复制 episode | 实现简单 | 改变数据集统计，容易伤害另一类任务 |
 | Weighted sampler | 不改原始数据，便于回滚 | 需要记录采样权重和随机种子 |
 
+## 本轮 SmolVLA 到底改了什么
+
+SmolVLA 的原始问题不是“完全不会抓杯”，而是明显偏向红杯。固定同一批 seed 分别强制红杯和蓝杯指令后，baseline 是红杯 `8/10`、蓝杯 `0/10`。这个现象说明模型具备抓取能力，但语言条件和颜色分布没有学均衡。
+
+我们先试了最直觉的复制数据路线：把蓝杯 episode 复制到 1.5x、2x、3x。结果蓝杯确实上来了，但红杯掉得很厉害：
+
+| 方案 | 红杯 | 蓝杯 | 判断 |
+| --- | --- | --- | --- |
+| baseline | 8/10 | 0/10 | 明显偏红杯 |
+| blue copy 1.5x | 3/10 | 7/10 | 蓝杯提升，红杯严重受损 |
+| blue copy 2x | 4/10 | 8/10 | 仍然伤害红杯 |
+| blue copy 3x | 2/10 | 8/10 | 更偏蓝杯，整体不稳 |
+
+所以主线改成 `WeightedRandomSampler`。它不复制 parquet episode，不改变原始 LeRobot 数据集，也不改变 norm stats，只在训练采样时提高蓝杯 frame 的抽样概率。实际使用的两个关键环境变量是：
+
+```bash
+export LEROBOT_TASK_WEIGHT_SUBSTRING=blue
+export LEROBOT_TASK_WEIGHT=2.0
+```
+
+这样做的好处是回滚简单：数据集本体还是原来的 `demo_data_language`，只要去掉 sampler 权重，训练就回到普通采样；同时它不会像复制 episode 那样把数据集统计硬改掉。
+
+本轮最佳 checkpoint 不是同一 run 的最终 step，而是中间的 `000500`：
+
+```text
+ckpt/smolvla_weighted_blue2_from5000_1000_20260629_143123/checkpoints/000500/pretrained_model
+```
+
+`001000` 的 loss 继续下降，但红蓝杯均衡性不如 `000500`。因此本专题把 `000500` 设为 protected checkpoint。后续任何 SmolVLA 新方案，都必须在同一批 fixed seeds、同一 `physical_success` 口径下超过它，才值得替换。
+
+最终结果分两层报告：
+
+| 评估范围 | 结果 |
+| --- | --- |
+| seeds `0-9` | 红杯 `8/10`，蓝杯 `10/10` |
+| seeds `0-29` | 红杯 `26/30`，蓝杯 `27/30`，总体 `53/60` |
+| 失败 seed 复跑 | `19/21` 成功，说明不少失败是边界非确定性 |
+
+这条线的核心经验很直接：先把任务按 instruction 拆开评估，再处理数据分布偏置。不要只看总体成功率，也不要看到蓝杯差就立刻复制数据；复制 episode 往往会把另一个任务伤掉，sampler 加权更适合作为第一优先级。
+
 ## ROCm 训练记录
 
-SmolVLA 在 ROCm 上训练时，大家需要记录：
+SmolVLA 在 ROCm 上训练时，记录：
 
 - 初始 checkpoint；
 - 数据根目录；
@@ -87,7 +127,7 @@ SmolVLA 在 ROCm 上训练时，大家需要记录：
 
 ## Checkpoint
 
-完成本任务后，大家应当得到：
+完成本任务后，保留这些结果：
 
 - 红杯和蓝杯固定指令成功率；
 - 至少两个采样策略的对照；

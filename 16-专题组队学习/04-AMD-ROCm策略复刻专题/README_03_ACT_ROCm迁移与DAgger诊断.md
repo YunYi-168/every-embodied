@@ -1,6 +1,6 @@
 # 03 ACT 在 ROCm 上的迁移与 DAgger 诊断
 
-本任务关注 ACT。大家需要理解：ACT 在训练集上 loss 下降，并不等于闭环部署稳定成功。尤其在 ROCm 设备上复刻时，要先证明失败不是环境、数据、显存或成功判定造成的，再讨论模型结构和数据策略。
+本任务关注 ACT。ACT 在训练集上 loss 下降，并不等于闭环部署稳定成功。尤其在 ROCm 设备上复刻时，要先证明失败不是环境、数据、显存或成功判定造成的，再讨论模型结构和数据策略。
 
 配套实操 Notebook：[03_act_dagger_diagnostics.ipynb](./notebooks/03_act_dagger_diagnostics.ipynb)。
 
@@ -52,9 +52,50 @@ flowchart LR
 
 注意：correction 数据不一定越多越好。直接把 full-reset failure-bucket 数据高权重混入主训练，可能破坏原本已经学会的 reset-start 行为。
 
+## 本轮 ACT 到底改了什么
+
+这次 ACT 不是原装脚本跑一遍就得到 `17/30`。原始 closed-loop 基线几乎不能通过严格物理成功判定，后面的提升来自一串可复查的改动。
+
+第一步是把评估口径改严。旧 `success` 只看环境几何条件，可能把推杯、挤杯、倒杯误判成成功。本专题统一报告 `physical_success`：杯子要被抬起、移动到盘上，并且终态基本直立。没有这一步，后面的训练改动很容易被旧指标误导。
+
+第二步是把失败拆成 open-loop 和 closed-loop。我们用数据集 observation 生成 ACT 动作，再把这些动作 open-loop 回放到 MuJoCo。这个诊断能区分两件事：模型在数据状态上是否已经学到动作，以及策略自己闭环跑时是否因为状态漂移而失败。结果显示，单 demo 或 clean 数据下，ACT 有时手臂轨迹接近可用，但 gripper release 很短、闭环分布偏移也很明显，所以不能只靠改 gripper 或继续训练解决。
+
+第三步是重做 reset 对齐的数据。旧数据里不少 episode 并不是从评估 reset 姿态开始，训练时看起来 loss 正常，closed-loop 从 reset 出发却不接触杯子。后续主线改成 reset-aligned scripted oracle：每条轨迹从评估使用的 reset 状态开始，先保证数据本身能按同一物理口径回放成功。
+
+第四步是调整 ACT 训练配置。最终主线使用 no-VAE、`chunk_size=20`、`n_action_steps=10`、timestamp state、`obj_init` state、gripper BCE `0.5` 和 per-episode early weight。这里每一项都对应一个失败现象：
+
+| 改动 | 解决的问题 |
+| --- | --- |
+| no-VAE | 小数据下减少采样随机性，让复刻更稳定 |
+| timestamp state | 给模型显式时间相位，避免所有阶段被平均到一起 |
+| `obj_init` state | 让模型知道本轮杯子和盘子的初始几何关系 |
+| gripper BCE `0.5` | 强化开合爪时序，但不过度牺牲手臂轨迹 |
+| per-episode early weight | 保护每条 episode 的 reset-start 前段，不让 correction 数据冲掉开头行为 |
+| `n_action_steps=10` | 保留 chunk 连贯性，同时降低一次执行太长带来的闭环漂移 |
+
+第五步是 prefix40 DAgger。让当前 ACT 先跑 40 个 control tick，再切到 scripted oracle 接管并保存 suffix。这样采到的是“策略自己跑偏后的状态”，比只用完美 reset-start 示教更接近 closed-loop 失败分布。
+
+第六步是给 correction episode 加 timestamp offset。prefix40 suffix 不是从 reset 开始的完整任务，如果它的 timestamp 也从 0 开始，模型会把“中途纠偏动作”误认为“任务开头动作”。因此 correction episodes 使用 `timestamp offset = 2.0`，让时间相位和 reset-start episode 分开。
+
+第七步是给 correction 数据降权。我们试过不同权重：
+
+| correction 采样权重 | 严格结果 | 结论 |
+| --- | --- | --- |
+| `0.1` | 1/15 | 纠偏数据太弱，release / 落点能力补不上 |
+| `0.5` | 0/15 | 纠偏数据太强，破坏 reset-start 主分布 |
+| `0.25` | 13/30 | 当时最好的折中 |
+
+最后再用 best025 checkpoint 对失败 seed 做一轮 prefix40 DAgger v1，采到 3 条有效纠偏轨迹，并继续用 timestamp offset `2.0` 和 sample weight `0.25` 合并训练，得到当前 protected checkpoint：
+
+```text
+ckpt/act_scripted_reset_oracle_plus_prefix40_dagger_best025_toffset2_downweight025_chunk20_n10_novae_gpu_5000_20260629_031208/step_5000
+```
+
+扩大评估得到 seen `6/10`、mixed `4/10`、heldout `7/10`，合计 `17/30 physical_success`。后续的 DAgger v2 和 full-reset failure-bucket 直接混入都没有超过它，full-reset failure-bucket 甚至会退化到 `0/15`。因此教程里把这个 v1 best 当作 ACT 保护基线，而不是把所有后续尝试都写成改进。
+
 ## ROCm 上要记录什么
 
-ACT 训练通常显存占用不算高，但仍建议大家记录：
+ACT 训练通常显存占用不算高，但仍然要记录：
 
 - batch size；
 - chunk size；
@@ -73,7 +114,7 @@ ACT 训练通常显存占用不算高，但仍建议大家记录：
 
 ![ACT DAgger 进展曲线](./assets/act_dagger_progress_curve.png)
 
-图 1：ACT 闭环物理成功率随诊断步骤的变化。大家需要注意，这里的提升来自数据和闭环状态纠偏，不是简单加长训练时间。
+图 1：ACT 闭环物理成功率随诊断步骤的变化。这里的提升来自数据和闭环状态纠偏，不是简单加长训练时间。
 
 | 阶段 | physical success | 解释 |
 | --- | --- | --- |
@@ -84,15 +125,15 @@ ACT 训练通常显存占用不算高，但仍建议大家记录：
 
 ![ACT DAgger 成功关键帧](./assets/act_success_sequence.jpg)
 
-图 2：ACT best DAgger 的物理成功 rollout。大家可以对照抓取、搬运和释放三个阶段检查自己的视频。
+图 2：ACT best DAgger 的物理成功 rollout。可以对照抓取、搬运和释放三个阶段检查自己的视频。
 
 ![ACT DAgger 失败关键帧](./assets/act_failure_sequence.jpg)
 
-图 3：ACT best DAgger 的典型失败 rollout。它提醒大家：即使环境几何条件偶尔接近成功，也要继续检查抬升高度和终态姿态。
+图 3：ACT best DAgger 的典型失败 rollout。即使环境几何条件偶尔接近成功，也要继续检查抬升高度和终态姿态。
 
 ## Checkpoint
 
-完成本任务后，大家应当整理：
+完成本任务后，整理这些项目：
 
 | 项目 | 内容 |
 | --- | --- |

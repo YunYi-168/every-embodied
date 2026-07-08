@@ -2,7 +2,7 @@
 
 本目录保存 AMD ROCm 策略复刻专题的配套 Notebook。Markdown 章节负责讲清楚概念、判断口径和实验结论；Notebook 负责逐格检查环境、读取指标、展示图片、生成命令模板和整理结果表。
 
-建议大家从专题根目录启动 Jupyter：
+建议从专题根目录启动 Jupyter：
 
 ```bash
 cd /path/to/04-AMD-ROCm策略复刻专题

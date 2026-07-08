@@ -1,6 +1,6 @@
 # 资产说明
 
-本目录保存 AMD ROCm 策略复刻专题中使用的小体积教学图。图表和关键帧序列由 `../code/generate_tutorial_assets.py` 生成，便于大家核对教程中的成功率和 rollout 行为。
+本目录保存 AMD ROCm 策略复刻专题中使用的小体积教学图。图表和关键帧序列由 `../code/generate_tutorial_assets.py` 生成，用来核对教程中的成功率和 rollout 行为。
 
 重新生成图表时，先准备自己的实验输出目录，再运行：
 
@@ -19,4 +19,8 @@ python code/generate_tutorial_assets.py --source-root "$OUTPUT_ROOT"
 | `smolvla_blue_success_sequence.jpg` | SmolVLA 加权采样后蓝杯成功关键帧 |
 | `act_failure_sequence.jpg` | ACT DAgger 典型失败关键帧 |
 | `act_success_sequence.jpg` | ACT DAgger 物理成功关键帧 |
-| `metrics_snapshot.json` | 小体积指标快照，便于核对图表数字 |
+| `pi0_raw_vs_finisher_diagnostic.png` | pi_0 raw 与脚本收尾器的尾段诊断指标图 |
+| `pi0_ep2_raw_vs_finisher_side_by_side.mp4` | pi_0 episode2 raw-vs-hybrid 对比视频 |
+| `pi0_ep2_raw_vs_finisher_frame.png` | pi_0 episode2 对比视频关键帧 |
+| `pi0_ep2_raw_vs_finisher_metrics.md` | pi_0 episode2 raw-vs-hybrid 指标小表 |
+| `metrics_snapshot.json` | 小体积指标快照，包含 ACT、SmolVLA、pi_0 小集诊断、pi_0 full20 open-loop 和 closed-loop strict 数字 |

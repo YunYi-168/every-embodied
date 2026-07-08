@@ -1,6 +1,6 @@
 # 02 物理成功评估与视频复核
 
-本任务解决一个核心问题：日志显示成功时，策略是否真的完成了抓取。大家会把环境原始成功率和物理成功率分开统计，并用视频复核典型成功和典型失败。
+本任务解决一个核心问题：日志显示成功时，策略是否真的完成了抓取。这里把环境原始成功率和物理成功率分开统计，并用视频复核典型成功和典型失败。
 
 配套实操 Notebook：[02_physical_success_review.ipynb](./notebooks/02_physical_success_review.ipynb)。
 
@@ -26,7 +26,7 @@
 3. 抬起状态持续至少若干控制 tick；
 4. 终态杯子没有明显倒下。
 
-这套指标不要求大家的阈值永远不变。更重要的是：同一组模型对比时必须使用同一口径。
+这套指标不要求阈值永远不变。更重要的是：同一组模型对比时必须使用同一口径。
 
 ## 批量评估脚本形态
 
@@ -72,13 +72,13 @@ python tools/audit_language_policy_physical.py \
 
 图注示例：
 
-> 图 1：SmolVLA 在蓝杯任务上的真实成功 rollout。大家需要观察杯子是否被夹起、是否被放到盘上，以及终态是否保持直立。
+> 图 1：SmolVLA 在蓝杯任务上的真实成功 rollout。复核重点是杯子是否被夹起、是否被放到盘上，以及终态是否保持直立。
 
 不要只放成功视频。失败视频更适合教学，因为它能解释为什么需要更严格的评估口径。
 
 ## 示例关键帧序列
 
-下面的关键帧来自同一套物理成功判定流程。大家复核视频时，不要只看最后一帧的杯子位置，而要沿着时间轴观察是否出现了稳定夹取、抬升、搬运和释放。
+下面的关键帧来自同一套物理成功判定流程。复核视频时，不要只看最后一帧的杯子位置，而要沿着时间轴观察是否出现了稳定夹取、抬升、搬运和释放。
 
 ![SmolVLA baseline 蓝杯失败关键帧](./assets/smolvla_blue_failure_sequence.jpg)
 
@@ -86,7 +86,7 @@ python tools/audit_language_policy_physical.py \
 
 ![SmolVLA 加权采样后蓝杯成功关键帧](./assets/smolvla_blue_success_sequence.jpg)
 
-图 2：SmolVLA 使用 blue frame 加权采样后的蓝杯成功案例。大家可以看到蓝杯先被夹起，再被移动到盘子上，终态也满足严格物理口径。
+图 2：SmolVLA 使用 blue frame 加权采样后的蓝杯成功案例。蓝杯先被夹起，再被移动到盘子上，终态也满足严格物理口径。
 
 ![ACT DAgger 失败关键帧](./assets/act_failure_sequence.jpg)
 
@@ -94,11 +94,11 @@ python tools/audit_language_policy_physical.py \
 
 ![ACT DAgger 成功关键帧](./assets/act_success_sequence.jpg)
 
-图 4：ACT DAgger 的物理成功案例。这个序列展示了从接近、夹取、搬运到盘上释放的完整过程，可作为大家检查自己 rollout 的参考。
+图 4：ACT DAgger 的物理成功案例。这个序列展示了从接近、夹取、搬运到盘上释放的完整过程，可作为 rollout 复核参考。
 
 ## Checkpoint
 
-完成本任务后，大家应当得到：
+完成本任务后，保留这些证据：
 
 - 红杯和蓝杯各一份 JSONL 评估文件；
 - 一份 summary JSON 或 Markdown 表；

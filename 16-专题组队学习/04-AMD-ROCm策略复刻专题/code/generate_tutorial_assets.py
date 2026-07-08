@@ -120,6 +120,119 @@ VIDEO_SPECS = [
     ),
 ]
 
+PI0_DIAGNOSTIC = {
+    "raw": {
+        "label": "pi0 raw",
+        "success": 0,
+        "total": 4,
+        "xy_dist": 0.0087,
+        "tcp_z": 0.8953,
+        "max_lift": 0.0682,
+        "upright": 1.0,
+        "gripper": 0.0535,
+    },
+    "hybrid": {
+        "label": "pi0 + finisher",
+        "success": 4,
+        "total": 4,
+        "xy_dist": 0.0409,
+        "tcp_z": 0.9457,
+        "max_lift": 0.0948,
+        "upright": 0.9741,
+        "gripper": 0.0871,
+    },
+}
+
+PI0_FULL20_RAW = {
+    "success": 1,
+    "total": 20,
+    "ever_success": 3,
+    "ever_total": 20,
+    "success_episodes": [18],
+    "ever_success_episodes": [4, 18, 19],
+    "mean_action_mae": 0.0423,
+    "mean_gripper_abs": 0.0991,
+}
+
+PI0_FULL20_FINISHER = {
+    "success": 4,
+    "total": 20,
+    "ever_success": 4,
+    "ever_total": 20,
+    "success_episodes": [7, 9, 13, 14],
+    "red_success": 2,
+    "red_total": 10,
+    "blue_success": 2,
+    "blue_total": 10,
+    "mean_action_mae": 0.0511,
+    "mean_gripper_abs": 0.1145,
+}
+
+PI0_CLOSEDLOOP_RAW = {
+    "success": 0,
+    "total": 20,
+    "legacy_success": 2,
+    "legacy_total": 20,
+    "legacy_success_episodes": [4, 18],
+    "failure_buckets": {
+        "not_upright_after_lift": 10,
+        "no_enough_lift": 9,
+        "strict_components_ok_but_legacy_false": 1,
+    },
+    "mean_xy_dist": 0.3382,
+    "mean_max_lift": 0.0444,
+}
+
+PI0_TCPPLATE_SCAFFOLD = {
+    "no_scripted_gripper_success": 5,
+    "no_scripted_gripper_total": 10,
+    "policy_prefix_success": 3,
+    "policy_prefix_total": 10,
+    "repeated_schedule_success": 21,
+    "repeated_schedule_legacy_success": 23,
+    "repeated_schedule_total": 30,
+    "long_schedule_success": 30,
+    "long_schedule_legacy_success": 30,
+    "long_schedule_total": 30,
+    "long_schedule_red_success": 18,
+    "long_schedule_red_total": 18,
+    "long_schedule_blue_success": 12,
+    "long_schedule_blue_total": 12,
+    "long_schedule_mean_xy": 0.0281,
+    "long_schedule_max_xy": 0.0739,
+    "phase_head_success": 30,
+    "phase_head_legacy_success": 30,
+    "phase_head_total": 30,
+    "phase_head_red_success": 18,
+    "phase_head_red_total": 18,
+    "phase_head_blue_success": 12,
+    "phase_head_blue_total": 12,
+    "phase_head_mean_xy": 0.027151,
+    "phase_head_max_xy": 0.073472,
+    "adaptive_gate_success": 30,
+    "adaptive_gate_legacy_success": 30,
+    "adaptive_gate_total": 30,
+    "adaptive_gate_red_success": 18,
+    "adaptive_gate_blue_success": 12,
+    "adaptive_gate_mean_xy": 0.028102,
+    "adaptive_gate_max_xy": 0.061731,
+    "transition_head_success": 30,
+    "transition_head_legacy_success": 30,
+    "transition_head_total": 30,
+    "transition_head_red_success": 18,
+    "transition_head_blue_success": 12,
+    "transition_head_mean_xy": 0.027873,
+    "transition_head_max_xy": 0.074125,
+    "transition_head_release_mean": 146.633333,
+    "transition_head_release_min": 126,
+    "transition_head_release_max": 180,
+    "transition_head_active_releases": 29,
+    "transition_head_fallback_releases": 1,
+    "short_schedule_episodes": [1, 7, 9],
+    "short_move_preplace_frames": "72-75",
+    "long_move_preplace_frames": "120-123",
+}
+
 
 def load_font(size: int, bold: bool = False) -> ImageFont.FreeTypeFont:
     path = FONT_BOLD if bold else FONT_REGULAR
@@ -333,38 +446,118 @@ def save_best_summary(act_stages: list[dict], out_path: Path) -> None:
     rows = [
         ("ACT best DAgger", act_stages[-1]["success"], act_stages[-1]["total"], "#20866d"),
         ("SmolVLA weighted 500", 53, 60, "#2878d7"),
+        ("pi0 raw closed20", PI0_CLOSEDLOOP_RAW["success"], PI0_CLOSEDLOOP_RAW["total"], "#d76445"),
+        ("pi0 + finisher full20", PI0_FULL20_FINISHER["success"], PI0_FULL20_FINISHER["total"], "#6d60c8"),
+        (
+            "pi0 tcpplate scripted",
+            PI0_TCPPLATE_SCAFFOLD["long_schedule_success"],
+            PI0_TCPPLATE_SCAFFOLD["long_schedule_total"],
+            "#8a6f18",
+        ),
+        (
+            "pi0 tcpplate learned grip",
+            PI0_TCPPLATE_SCAFFOLD["phase_head_success"],
+            PI0_TCPPLATE_SCAFFOLD["phase_head_total"],
+            "#1f8a99",
+        ),
+        (
+            "pi0 adaptive gate",
+            PI0_TCPPLATE_SCAFFOLD["adaptive_gate_success"],
+            PI0_TCPPLATE_SCAFFOLD["adaptive_gate_total"],
+            "#6d8b2c",
+        ),
+        (
+            "pi0 transition head",
+            PI0_TCPPLATE_SCAFFOLD["transition_head_success"],
+            PI0_TCPPLATE_SCAFFOLD["transition_head_total"],
+            "#9a4d8f",
+        ),
     ]
-    width, height = 1180, 680
+    width, height = 1500, 780
     img = Image.new("RGB", (width, height), "#f7f8fb")
     draw = ImageDraw.Draw(img)
     draw_header(
         draw,
         "Current reproducibility status",
-        "strict physical_success; pi0 is gated-smoke pending",
+        "strict physical_success; raw policies and scaffolded diagnostics are separated",
     )
-    chart = (120, 150, 1010, 505)
+    chart = (120, 180, 1380, 570)
     draw_axes(draw, chart)
     x0, y0, x1, y1 = chart
-    bar_w = 150
+    bar_w = 110
     font = load_font(20)
-    label_font = load_font(19)
+    label_font = load_font(18)
 
     for i, (label, success, total, color) in enumerate(rows):
         rate = success / total
-        cx = x0 + int((x1 - x0) * (i + 1) / 3)
+        cx = x0 + int((x1 - x0) * (i + 1) / (len(rows) + 1))
         by0 = y1 - int((y1 - y0) * rate)
         draw.rounded_rectangle((cx - bar_w // 2, by0, cx + bar_w // 2, y1), radius=5, fill=color)
-        draw.text((cx - 50, by0 - 34), f"{success}/{total}", fill="#18202a", font=font)
-        draw.text((cx - 45, by0 - 62), percent_text(rate), fill="#18202a", font=font)
+        draw.text((cx - 44, by0 - 34), f"{success}/{total}", fill="#18202a", font=font)
+        draw.text((cx - 40, by0 - 62), percent_text(rate), fill="#18202a", font=font)
         for j, part in enumerate(label.split()):
             part_w = draw.textlength(part, font=label_font)
             draw.text((cx - part_w / 2, y1 + 24 + j * 24), part, fill="#26313d", font=label_font)
 
-    draw.rounded_rectangle((750, 238, 912, 286), radius=5, fill="#d7dce2")
-    draw.text((772, 250), "pi0 pending", fill="#26313d", font=load_font(20, bold=True))
     draw.text(
-        (52, 612),
-        "Figure: ACT and SmolVLA have evaluated rollouts; pi0 remains pending until smoke passes.",
+        (52, 705),
+        "Figure: pi0 transition-head scaffold still uses oracle prefix; raw pi0 closed-loop remains 0/20.",
+        fill="#55606d",
+        font=load_font(18),
+    )
+    img.save(out_path)
+
+
+def save_pi0_diagnostic(out_path: Path) -> None:
+    width, height = 1280, 720
+    img = Image.new("RGB", (width, height), "#f7f8fb")
+    draw = ImageDraw.Draw(img)
+    draw_header(
+        draw,
+        "pi0 terminal-stage diagnostic",
+        "episode2 red mug; raw policy is close but misses strict physical_success",
+    )
+
+    chart = (120, 160, 1160, 500)
+    draw_axes(draw, chart)
+    x0, y0, x1, y1 = chart
+    metrics = [
+        ("xy dist", "xy_dist", 0.10, "< 0.10"),
+        ("tcp z", "tcp_z", 0.95, "> 0.90"),
+        ("max lift", "max_lift", 0.12, "lifted"),
+        ("upright", "upright", 1.0, ">= 0.7"),
+        ("gripper", "gripper", 0.10, "< 0.10"),
+    ]
+    colors = {"raw": "#d76445", "hybrid": "#4f9f2e"}
+    bar_w = 48
+    label_font = load_font(17)
+    value_font = load_font(17)
+    group_w = (x1 - x0) / len(metrics)
+
+    for i, (label, key, scale_max, hint) in enumerate(metrics):
+        center = x0 + group_w * (i + 0.5)
+        for offset, variant in [(-32, "raw"), (32, "hybrid")]:
+            row = PI0_DIAGNOSTIC[variant]
+            value = float(row[key])
+            h = int(min(value / scale_max, 1.0) * (y1 - y0))
+            bx0 = int(center + offset - bar_w / 2)
+            bx1 = int(center + offset + bar_w / 2)
+            by0 = y1 - h
+            draw.rounded_rectangle((bx0, by0, bx1, y1), radius=4, fill=colors[variant])
+            draw.text((bx0 - 9, by0 - 26), f"{value:.3f}", fill="#18202a", font=value_font)
+        label_w = draw.textlength(label, font=label_font)
+        draw.text((center - label_w / 2, y1 + 20), label, fill="#26313d", font=label_font)
+        hint_w = draw.textlength(hint, font=label_font)
+        draw.text((center - hint_w / 2, y1 + 44), hint, fill="#66717f", font=label_font)
+
+    legend_y = 592
+    draw.rounded_rectangle((120, legend_y, 150, legend_y + 20), radius=4, fill=colors["raw"])
+    draw.text((162, legend_y - 2), "small-set raw reference: 0/4 final physical_success", fill="#26313d", font=load_font(18))
+    draw.rounded_rectangle((120, legend_y + 34, 150, legend_y + 54), radius=4, fill=colors["hybrid"])
+    draw.text((162, legend_y + 32), "small-set finisher: 4/4; full20 template-tail: 4/20", fill="#26313d", font=load_font(18))
+    draw.text(
+        (52, 678),
+        "Figure: the finisher validates a release/raise/stabilize bottleneck; it should not be reported as raw pi0 success.",
         fill="#55606d",
         font=load_font(18),
     )
@@ -449,10 +642,88 @@ def write_metrics_snapshot(smolvla: list[dict], act_stages: list[dict], out_path
     snapshot = {
         "smolvla_forced_instruction_n10": smolvla,
         "act_progress": act_stages,
+        "pi0_diagnostic_balanced_2b2r": {
+            "raw_final_physical_success": "0/4",
+            "raw_batch_rerun_final_physical_success": "1/4",
+            "scripted_finisher_final_physical_success": "4/4",
+            "full20_template_tail_final_physical_success": "4/20",
+            "full20_template_tail_physical_success_ever": "4/20",
+            "full20_template_tail_success_episodes": PI0_FULL20_FINISHER["success_episodes"],
+            "full20_template_tail_red_success": "2/10",
+            "full20_template_tail_blue_success": "2/10",
+            "full20_template_tail_mean_action_mae": PI0_FULL20_FINISHER["mean_action_mae"],
+            "full20_template_tail_mean_gripper_abs": PI0_FULL20_FINISHER["mean_gripper_abs"],
+            "full20_openloop_raw_final_physical_success": "1/20",
+            "full20_openloop_raw_physical_success_ever": "3/20",
+            "full20_openloop_raw_success_episodes": [18],
+            "full20_openloop_raw_ever_success_episodes": [4, 18, 19],
+            "full20_openloop_raw_mean_action_mae": PI0_FULL20_RAW["mean_action_mae"],
+            "full20_openloop_raw_mean_gripper_abs": PI0_FULL20_RAW["mean_gripper_abs"],
+            "full20_closedloop_raw_physical_success": "0/20",
+            "full20_closedloop_raw_legacy_success": "2/20",
+            "full20_closedloop_raw_legacy_success_episodes": PI0_CLOSEDLOOP_RAW["legacy_success_episodes"],
+            "full20_closedloop_raw_failure_buckets": PI0_CLOSEDLOOP_RAW["failure_buckets"],
+            "full20_closedloop_raw_mean_xy_dist": PI0_CLOSEDLOOP_RAW["mean_xy_dist"],
+            "full20_closedloop_raw_mean_max_lift": PI0_CLOSEDLOOP_RAW["mean_max_lift"],
+            "tcpplate_scaffold_no_scripted_gripper_physical_success": "5/10",
+            "tcpplate_scaffold_policy_prefix_scripted_gripper_physical_success": "3/10",
+            "tcpplate_scaffold_repeated_schedule_physical_success": "21/30",
+            "tcpplate_scaffold_repeated_schedule_legacy_success": "23/30",
+            "tcpplate_scaffold_long_schedule_physical_success": "30/30",
+            "tcpplate_scaffold_long_schedule_legacy_success": "30/30",
+            "tcpplate_scaffold_long_schedule_red_success": "18/18",
+            "tcpplate_scaffold_long_schedule_blue_success": "12/12",
+            "tcpplate_scaffold_long_schedule_mean_xy": PI0_TCPPLATE_SCAFFOLD["long_schedule_mean_xy"],
+            "tcpplate_scaffold_long_schedule_max_xy": PI0_TCPPLATE_SCAFFOLD["long_schedule_max_xy"],
+            "tcpplate_scaffold_phase_head_physical_success": "30/30",
+            "tcpplate_scaffold_phase_head_legacy_success": "30/30",
+            "tcpplate_scaffold_phase_head_red_success": "18/18",
+            "tcpplate_scaffold_phase_head_blue_success": "12/12",
+            "tcpplate_scaffold_phase_head_mean_xy": PI0_TCPPLATE_SCAFFOLD["phase_head_mean_xy"],
+            "tcpplate_scaffold_phase_head_max_xy": PI0_TCPPLATE_SCAFFOLD["phase_head_max_xy"],
+            "tcpplate_scaffold_adaptive_gate_physical_success": "30/30",
+            "tcpplate_scaffold_adaptive_gate_legacy_success": "30/30",
+            "tcpplate_scaffold_adaptive_gate_red_success": "18/18",
+            "tcpplate_scaffold_adaptive_gate_blue_success": "12/12",
+            "tcpplate_scaffold_adaptive_gate_mean_xy": PI0_TCPPLATE_SCAFFOLD["adaptive_gate_mean_xy"],
+            "tcpplate_scaffold_adaptive_gate_max_xy": PI0_TCPPLATE_SCAFFOLD["adaptive_gate_max_xy"],
+            "tcpplate_scaffold_adaptive_gate_threshold": "xy=0.05m,min_steps=20,max_steps=180",
+            "tcpplate_scaffold_adaptive_gate_counterexamples": {
+                "xy0p09_full30": "29/30, fail seed1034, max xy 3.161459m",
+                "xy0p08_partial": "8/9 strict before stopped, fail seed1012",
+            },
+            "tcpplate_scaffold_transition_head_physical_success": "30/30",
+            "tcpplate_scaffold_transition_head_legacy_success": "30/30",
+            "tcpplate_scaffold_transition_head_red_success": "18/18",
+            "tcpplate_scaffold_transition_head_blue_success": "12/12",
+            "tcpplate_scaffold_transition_head_mean_xy": PI0_TCPPLATE_SCAFFOLD["transition_head_mean_xy"],
+            "tcpplate_scaffold_transition_head_max_xy": PI0_TCPPLATE_SCAFFOLD["transition_head_max_xy"],
+            "tcpplate_scaffold_transition_head_release_mean": PI0_TCPPLATE_SCAFFOLD["transition_head_release_mean"],
+            "tcpplate_scaffold_transition_head_release_range": [
+                PI0_TCPPLATE_SCAFFOLD["transition_head_release_min"],
+                PI0_TCPPLATE_SCAFFOLD["transition_head_release_max"],
+            ],
+            "tcpplate_scaffold_transition_head_active_releases": "29/30",
+            "tcpplate_scaffold_transition_head_fallback_releases": "1/30",
+            "tcpplate_scaffold_transition_head_feature_mode": "xy_step",
+            "tcpplate_scaffold_short_schedule_episodes": PI0_TCPPLATE_SCAFFOLD["short_schedule_episodes"],
+            "tcpplate_scaffold_short_move_preplace_frames": PI0_TCPPLATE_SCAFFOLD["short_move_preplace_frames"],
+            "tcpplate_scaffold_long_move_preplace_frames": PI0_TCPPLATE_SCAFFOLD["long_move_preplace_frames"],
+            "note": "pi0 + finisher is a diagnostic hybrid result, not pure pi0 raw success; phase-only gripper head and xy-step transition head replace two scaffold rules, but oracle prefix and schedule tail remain",
+        },
         "best_summary": {
             "act_best_dagger": {"physical_success": "17/30"},
             "smolvla_weighted_blue2_step500_expand30": {"physical_success": "53/60"},
-            "pi0": "pending smoke/train verification",
+            "pi0_raw_full20_closedloop": {"physical_success": "0/20"},
+            "pi0_raw_full20_openloop": {"physical_success": "1/20"},
+            "pi0_raw_balanced_2b2r_reference": {"physical_success": "0/4"},
+            "pi0_raw_balanced_2b2r_batch_rerun": {"physical_success": "1/4"},
+            "pi0_scripted_finisher_balanced_2b2r": {"physical_success": "4/4"},
+            "pi0_template_tail_full20": {"physical_success": "4/20"},
+            "pi0_tcpplate_scaffold_unseen30_long_schedule": {"physical_success": "30/30"},
+            "pi0_tcpplate_scaffold_phase_head_unseen30": {"physical_success": "30/30"},
+            "pi0_tcpplate_scaffold_adaptive_gate_unseen30": {"physical_success": "30/30"},
+            "pi0_tcpplate_scaffold_transition_head_unseen30": {"physical_success": "30/30"},
         },
     }
     out_path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -487,6 +758,7 @@ def main() -> None:
     save_grouped_bars(smolvla, asset_dir / "smolvla_red_blue_success.png")
     save_act_progress(act_stages, asset_dir / "act_dagger_progress_curve.png")
     save_best_summary(act_stages, asset_dir / "model_status_summary.png")
+    save_pi0_diagnostic(asset_dir / "pi0_raw_vs_finisher_diagnostic.png")
     write_metrics_snapshot(smolvla, act_stages, asset_dir / "metrics_snapshot.json")
 
     for filename, title, rel_path in VIDEO_SPECS:
