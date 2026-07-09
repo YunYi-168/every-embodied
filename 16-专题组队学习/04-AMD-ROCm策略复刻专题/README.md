@@ -2,6 +2,8 @@
 
 本专题在 AMD Ryzen AI MAX+ / Radeon GPU 设备上复刻 LeRobot、ACT、SmolVLA 和 pi_0。它不是单纯的环境安装笔记，而是一套围绕“复刻是否真的成功”的组队学习实践：从设备资源检查开始，逐步完成 MuJoCo 抓杯任务的数据审计、ACT 闭环诊断、SmolVLA 加权采样、pi_0 权限 smoke test 和实验报告整理。
 
+如果暂时没有本地 AMD 设备，也可以先参考 [AMD / AUP 免费云平台使用指南](./README_00_AMD_AUP免费云平台使用指南.md)，用远程 JupyterHub / Code Server 完成浏览器端开发和本专题的环境准备。该平台面向课程学习提供一定免费额度，具体额度和开通方式以平台当前页面或管理员通知为准。
+
 如果要把本专题组织成 Datawhale 组队学习活动，可以先参考：[00_组队学习招募参考稿.md](./00_组队学习招募参考稿.md)。其中的开营时间、领学员、报名入口和二维码需要在正式发布前替换。
 
 完成本专题后，可以做到：
@@ -32,6 +34,7 @@
 
 | 任务 | Markdown 概述 | Notebook 实操 |
 | --- | --- | --- |
+| 00 | [AMD / AUP 免费云平台使用指南](./README_00_AMD_AUP免费云平台使用指南.md) | - |
 | 01 | [AMD ROCm 设备与环境确认](./README_01_AMD_ROCm设备与环境确认.md) | [01_device_env_check.ipynb](./notebooks/01_device_env_check.ipynb) |
 | 02 | [物理成功评估与视频复核](./README_02_物理成功评估与视频复核.md) | [02_physical_success_review.ipynb](./notebooks/02_physical_success_review.ipynb) |
 | 03 | [ACT 在 ROCm 上的迁移与 DAgger 诊断](./README_03_ACT_ROCm迁移与DAgger诊断.md) | [03_act_dagger_diagnostics.ipynb](./notebooks/03_act_dagger_diagnostics.ipynb) |

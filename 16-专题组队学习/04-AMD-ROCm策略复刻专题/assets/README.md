@@ -1,6 +1,6 @@
 # 资产说明
 
-本目录保存 AMD ROCm 策略复刻专题中使用的小体积教学图。图表和关键帧序列由 `../code/generate_tutorial_assets.py` 生成，用来核对教程中的成功率和 rollout 行为。
+本目录保存 AMD ROCm 策略复刻专题中使用的小体积教学图。图表和关键帧序列由 `../code/generate_tutorial_assets.py` 生成，用来核对教程中的成功率和 rollout 行为；`aup_cloud_guide/` 中的截图来自 AMD / AUP 云平台使用指南压缩包。
 
 重新生成图表时，先准备自己的实验输出目录，再运行：
 
@@ -24,3 +24,4 @@ python code/generate_tutorial_assets.py --source-root "$OUTPUT_ROOT"
 | `pi0_ep2_raw_vs_finisher_frame.png` | pi_0 episode2 对比视频关键帧 |
 | `pi0_ep2_raw_vs_finisher_metrics.md` | pi_0 episode2 raw-vs-hybrid 指标小表 |
 | `metrics_snapshot.json` | 小体积指标快照，包含 ACT、SmolVLA、pi_0 小集诊断、pi_0 full20 open-loop 和 closed-loop strict 数字 |
+| `aup_cloud_guide/` | AMD / AUP 免费云平台 JupyterHub / Code Server 使用指南截图 |
