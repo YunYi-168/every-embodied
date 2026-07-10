@@ -1,6 +1,6 @@
 # AMD ROCm 策略复刻专题
 
-本专题在 AMD Ryzen AI MAX+ / Radeon GPU 设备上复刻 LeRobot、ACT、SmolVLA 和 pi_0。它不是单纯的环境安装笔记，而是一套围绕“复刻是否真的成功”的组队学习实践：从设备资源检查开始，逐步完成 MuJoCo 抓杯任务的数据审计、ACT 闭环诊断、SmolVLA 加权采样、pi_0 权限 smoke test 和实验报告整理。
+本专题在 AMD Ryzen AI MAX+ / Radeon GPU 设备上复刻 LeRobot、ACT、SmolVLA 和 pi_0。它不是单纯的环境安装笔记，也不再假设模型已经训练完成：从设备资源检查开始，先完成 MuJoCo 键盘采集、LeRobot 数据审计、三类模型的 smoke 与正式训练，再进入闭环部署、ACT DAgger、SmolVLA 加权采样、pi_0 尾段诊断和实验报告整理。
 
 如果暂时没有本地 AMD 设备，也可以先参考 [AMD / AUP 免费云平台使用指南](./README_00_AMD_AUP免费云平台使用指南.md)，用远程 JupyterHub / Code Server 完成浏览器端开发和本专题的环境准备。该平台面向课程学习提供一定免费额度，具体额度和开通方式以平台当前页面或管理员通知为准。
 
@@ -18,14 +18,14 @@
 
 ## 适合谁学习
 
-本专题适合已经完成 Every Embodied 基础章节，并希望在国产或异构 GPU 环境中做真实复刻的读者。最好已经了解：
+本专题适合希望在国产或异构 GPU 环境中做真实复刻的读者。最好已经了解：
 
 - Python / conda / uv 的基础环境管理；
 - LeRobot 数据集的基本结构；
 - MuJoCo 中 observation、action、rollout 的含义；
 - ACT、SmolVLA、pi_0 的大致区别。
 
-如果还没有跑过原始 MuJoCo 教程，建议先学习：
+如果还没有跑过原始 MuJoCo 教程，可以选择两条路线：先学习上游基础教程，或者直接从本专题 Task 07 的端到端 Notebook 开始。上游教程仍是理解原始场景和代码结构的重要参考：
 
 - [LeRobot MuJoCo 训练 ACT、SmolVLA、pi_0 教程](../../06-策略抓取或抓取VLA/大模型控制、VLA、VLM/04mujoco复现ACT、Pi0、SmolVLA/README.md)
 - [策略诊断与物理成功评估](../../06-策略抓取或抓取VLA/大模型控制、VLA、VLM/04mujoco复现ACT、Pi0、SmolVLA/09策略诊断与物理成功评估.md)
@@ -41,8 +41,23 @@
 | 04 | [SmolVLA 在 ROCm 上的迁移与采样加权](./README_04_SmolVLA_ROCm迁移与采样加权.md) | [04_smolvla_weighted_sampling.ipynb](./notebooks/04_smolvla_weighted_sampling.ipynb) |
 | 05 | [pi_0 权限 smoke 与训练门控](./README_05_pi0_ROCm权限Smoke与训练门控.md) | [05_pi0_smoke_gate.ipynb](./notebooks/05_pi0_smoke_gate.ipynb) |
 | 06 | [ROCm 调试复盘与排障案例](./README_06_ROCm调试复盘与排障案例.md) | [06_rocm_debug_playbook.ipynb](./notebooks/06_rocm_debug_playbook.ipynb) |
+| 07 | [ROCm 端到端采集、训练与 MuJoCo 部署](./README_07_ROCm端到端采集训练部署.md#数据采集边界) | [07_data_collection_and_audit.ipynb](./notebooks/07_data_collection_and_audit.ipynb) |
+| 08 | [ACT smoke 与正式训练](./README_07_ROCm端到端采集训练部署.md#smoke-与正式训练) | [08_act_training_rocm.ipynb](./notebooks/08_act_training_rocm.ipynb) |
+| 09 | [SmolVLA smoke 与正式训练](./README_07_ROCm端到端采集训练部署.md#smoke-与正式训练) | [09_smolvla_training_rocm.ipynb](./notebooks/09_smolvla_training_rocm.ipynb) |
+| 10 | [pi_0 权限门控与正式训练](./README_07_ROCm端到端采集训练部署.md#smoke-与正式训练) | [10_pi0_training_rocm.ipynb](./notebooks/10_pi0_training_rocm.ipynb) |
+| 11 | [MuJoCo closed-loop 部署](./README_07_ROCm端到端采集训练部署.md#mujoco-closed-loop) | [11_mujoco_closed_loop_deploy.ipynb](./notebooks/11_mujoco_closed_loop_deploy.ipynb) |
 
 Markdown 章节主要负责讲清楚背景、判断口径和实验结论；Notebook 负责逐格运行检查、读取指标、生成图表和整理命令模板。可以先读 Markdown，再打开对应 Notebook 跟着跑。
+
+### 基础执行与诊断进阶的关系
+
+| 学习目标 | 入口 |
+| --- | --- |
+| 从零采数据、训练模型并部署到 MuJoCo | Task 07–11 |
+| 理解原始场景和历史 Notebook | 上游 `04mujoco复现ACT、Pi0、SmolVLA` |
+| 已有结果，重点学习物理评估和失败修复 | Task 02–06 |
+
+因此，本专题既可以使用已有数据学习诊断，也可以从 Task 07 开始完成完整训练闭环。Notebook 里的长采集和长训练默认关闭，确认路径、显示会话和磁盘空间后再显式打开。
 
 ## 阶段性复刻状态
 
@@ -62,6 +77,11 @@ Markdown 章节主要负责讲清楚背景、判断口径和实验结论；Noteb
 | Task 4 | 1 天 | SmolVLA 红/蓝杯成功率对照表、加权采样实验 |
 | Task 5 | 0.5 到 1 天 | pi_0 smoke test、训练门控、raw-vs-hybrid 尾段诊断、成功率提升路线图 |
 | Task 6 | 0.5 天 | 排障复盘、失败案例、实验报告整理 |
+| Task 7 | 0.5 到 1 天 | 20–50 条经过物理成功审计的红/蓝杯示教数据 |
+| Task 8 | 0.5 到 1 天 | ACT smoke、正式 checkpoint 和闭环基线 |
+| Task 9 | 1 天 | SmolVLA smoke、正式 checkpoint 和分指令评估 |
+| Task 10 | 1 到 2 天 | pi_0 权限门控、正式 checkpoint 和 raw policy 结果 |
+| Task 11 | 0.5 天 | held-out seeds 成功率、JSONL 和成功/失败视频 |
 
 ## Notebook 还是 Python 脚本
 

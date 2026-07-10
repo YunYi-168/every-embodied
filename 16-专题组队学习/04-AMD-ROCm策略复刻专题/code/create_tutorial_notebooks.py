@@ -91,6 +91,328 @@ def md_table(headers, rows):
 '''
 
 
+TRAINING_HELPERS = r'''
+import shlex
+
+try:
+    import yaml
+except ImportError as exc:
+    raise RuntimeError("当前环境缺少 PyYAML，请先执行 pip install pyyaml。") from exc
+
+
+def require_project_layout():
+    required = [
+        PROJECT_ROOT / "train_model.py",
+        PROJECT_ROOT / "env_config.py",
+        PROJECT_ROOT / "asset" / "example_scene_y2.xml",
+        PROJECT_ROOT / "mujoco_env" / "y_env2.py",
+    ]
+    missing = [path for path in required if not path.exists()]
+    if missing:
+        raise FileNotFoundError(
+            "PROJECT_ROOT 不是 04mujoco 教程目录，缺少：\n"
+            + "\n".join(str(path) for path in missing)
+        )
+    return True
+
+
+def dataset_report(dataset_root):
+    dataset_root = Path(dataset_root)
+    info_path = dataset_root / "meta" / "info.json"
+    tasks_path = dataset_root / "meta" / "tasks.jsonl"
+    if not info_path.exists():
+        raise FileNotFoundError(f"找不到 LeRobot 元数据：{info_path}")
+    info = json.loads(info_path.read_text(encoding="utf-8"))
+    tasks = []
+    if tasks_path.exists():
+        tasks = [
+            json.loads(line)["task"]
+            for line in tasks_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+    features = info.get("features", {})
+    rows = [
+        ("repo_id", info.get("repo_id", "")),
+        ("episodes", info.get("total_episodes", 0)),
+        ("frames", info.get("total_frames", 0)),
+        ("fps", info.get("fps", "")),
+        ("state shape", features.get("observation.state", {}).get("shape")),
+        ("action shape", features.get("action", {}).get("shape")),
+        ("tasks", " / ".join(tasks)),
+    ]
+    md_table(["数据项", "读取结果"], rows)
+    return info, tasks
+
+
+def make_training_config(
+    policy_type,
+    dataset_repo_id,
+    dataset_root,
+    output_dir,
+    steps,
+    batch_size,
+    chunk_size,
+    n_action_steps,
+    save_freq,
+    seed=42,
+):
+    return {
+        "dataset": {"repo_id": dataset_repo_id, "root": str(Path(dataset_root))},
+        "policy": {
+            "type": policy_type,
+            "chunk_size": int(chunk_size),
+            "n_action_steps": int(n_action_steps),
+            "device": "cuda",
+        },
+        "save_checkpoint": True,
+        "output_dir": str(Path(output_dir)),
+        "batch_size": int(batch_size),
+        "job_name": Path(output_dir).name,
+        "resume": False,
+        "seed": int(seed),
+        "num_workers": 4,
+        "steps": int(steps),
+        "eval_freq": 0,
+        "log_freq": max(1, min(50, int(steps))),
+        "save_freq": int(save_freq),
+        "use_policy_training_preset": True,
+        "wandb": {
+            "enable": False,
+            "project": f"every_embodied_{policy_type}",
+            "entity": None,
+            "disable_artifact": True,
+        },
+    }
+
+
+def write_training_config(name, config):
+    config_dir = OUTPUT_ROOT / "configs"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    path = config_dir / f"{name}.yaml"
+    path.write_text(
+        yaml.safe_dump(config, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    print("已写出配置：", path)
+    return path
+
+
+def training_command(config_path):
+    return [
+        sys.executable,
+        str(PROJECT_ROOT / "train_model.py"),
+        "--config_path",
+        str(Path(config_path)),
+    ]
+
+
+def run_training(config_path, enabled=False):
+    require_project_layout()
+    command = training_command(config_path)
+    print("$", shlex.join(command))
+    if not enabled:
+        print("当前只预览命令。确认配置后，把对应 RUN_* 开关改为 True。")
+        return None
+    env = os.environ.copy()
+    env["PYTHONPATH"] = f"{PROJECT_ROOT}:{env.get('PYTHONPATH', '')}"
+    return subprocess.run(command, cwd=PROJECT_ROOT, env=env, check=True)
+
+
+def show_rocm_resources():
+    command = ["rocm-smi", "--showuse", "--showmemuse", "--showtemp"]
+    print("$", shlex.join(command))
+    if shutil.which(command[0]) is None:
+        print("未找到 rocm-smi。确认当前机器是否安装 ROCm。")
+        return
+    subprocess.run(command, check=False)
+'''
+
+
+ROLLOUT_HELPERS = r'''
+import random
+import time
+
+import numpy as np
+from PIL import Image
+
+try:
+    import imageio.v2 as imageio
+except ImportError:
+    imageio = None
+
+
+def find_pretrained_model(run_dir):
+    run_dir = Path(run_dir)
+    last = run_dir / "checkpoints" / "last" / "pretrained_model"
+    if last.exists():
+        return last
+    candidates = sorted((run_dir / "checkpoints").glob("*/pretrained_model"))
+    if not candidates:
+        raise FileNotFoundError(f"没有在 {run_dir} 下找到 pretrained_model")
+    return candidates[-1]
+
+
+def image_tensor(array, size=(256, 256)):
+    import torch
+
+    image = Image.fromarray(array).convert("RGB").resize(size)
+    value = np.asarray(image, dtype=np.float32) / 255.0
+    return torch.from_numpy(value).permute(2, 0, 1).contiguous()
+
+
+def load_policy(policy_type, policy_path, dataset_repo_id, dataset_root, device="cuda"):
+    from lerobot.common.datasets.lerobot_dataset import LeRobotDatasetMetadata
+
+    if policy_type == "act":
+        from lerobot.common.policies.act.modeling_act import ACTPolicy as PolicyClass
+    elif policy_type == "smolvla":
+        from lerobot.common.policies.smolvla.modeling_smolvla import SmolVLAPolicy as PolicyClass
+    elif policy_type == "pi0":
+        from lerobot.common.policies.pi0.modeling_pi0 import PI0Policy as PolicyClass
+    else:
+        raise ValueError(f"不支持的 policy_type：{policy_type}")
+
+    metadata = LeRobotDatasetMetadata(dataset_repo_id, root=dataset_root)
+    policy = PolicyClass.from_pretrained(str(policy_path), dataset_stats=metadata.stats)
+    policy.to(device)
+    policy.eval()
+    return policy
+
+
+def strict_snapshot(env, initial_target_z, max_target_lift, max_lifted_run):
+    target_pos = np.asarray(env.env.get_p_body(env.obj_target), dtype=np.float64)
+    plate_pos = np.asarray(env.env.get_p_body("body_obj_plate_11"), dtype=np.float64)
+    target_R = np.asarray(env.env.get_R_body(env.obj_target), dtype=np.float64)
+    xy_dist = float(np.linalg.norm(target_pos[:2] - plate_pos[:2]))
+    upright_cos = float(target_R[2, 2])
+    gripper_open = bool(float(env.env.get_qpos_joint("rh_r1")[0]) < 0.1)
+    tcp_high = bool(float(env.env.get_p_body("tcp_link")[2]) > 0.9)
+    legacy_success = bool(env.check_success())
+    physical_success = bool(
+        legacy_success
+        and max_target_lift >= 0.03
+        and max_lifted_run >= 3
+        and upright_cos >= 0.7
+        and abs(float(target_pos[2] - plate_pos[2])) < 0.15
+        and gripper_open
+        and tcp_high
+    )
+    return {
+        "legacy_success": legacy_success,
+        "physical_success": physical_success,
+        "xy_dist": xy_dist,
+        "target_z": float(target_pos[2]),
+        "plate_z": float(plate_pos[2]),
+        "max_target_lift": float(max_target_lift),
+        "max_lifted_run": int(max_lifted_run),
+        "upright_cos": upright_cos,
+        "gripper_open": gripper_open,
+        "tcp_high": tcp_high,
+    }
+
+
+def run_closed_loop(
+    policy,
+    policy_type,
+    instruction,
+    seeds,
+    output_dir,
+    device="cuda",
+    max_action_steps=300,
+    render=True,
+):
+    from mujoco_env.y_env2 import SimpleEnv2
+    import torch
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    xml_path = PROJECT_ROOT / "asset" / "example_scene_y2.xml"
+    results = []
+
+    for seed in seeds:
+        np.random.seed(seed)
+        random.seed(seed)
+        env = SimpleEnv2(str(xml_path), action_type="joint_angle", state_type="joint_angle", seed=None)
+        env.set_instruction(instruction)
+        policy.reset()
+
+        initial_target_z = float(env.env.get_p_body(env.obj_target)[2])
+        max_target_lift = 0.0
+        lifted_run = 0
+        max_lifted_run = 0
+        frames = []
+        started = time.perf_counter()
+        final = None
+
+        action_step = 0
+        while action_step < max_action_steps and env.env.is_viewer_alive():
+            env.step_env()
+            if not env.env.loop_every(HZ=20):
+                continue
+
+            state = env.get_joint_state()[:6]
+            agent_image, wrist_image = env.grab_image()
+            observation = {
+                "observation.state": torch.as_tensor(state, dtype=torch.float32, device=device).unsqueeze(0),
+                "observation.image": image_tensor(agent_image).to(device).unsqueeze(0),
+                "observation.wrist_image": image_tensor(wrist_image).to(device).unsqueeze(0),
+                "task": [instruction],
+            }
+            with torch.inference_mode():
+                action = policy.select_action(observation)[0, :7].detach().cpu().numpy()
+            action[6] = np.clip(action[6], 0.0, 1.0)
+            env.step(action.astype(np.float32))
+
+            target_z = float(env.env.get_p_body(env.obj_target)[2])
+            lift = target_z - initial_target_z
+            max_target_lift = max(max_target_lift, lift)
+            lifted_run = lifted_run + 1 if lift >= 0.03 else 0
+            max_lifted_run = max(max_lifted_run, lifted_run)
+            final = strict_snapshot(env, initial_target_z, max_target_lift, max_lifted_run)
+
+            if action_step % 2 == 0:
+                frames.append(np.asarray(agent_image))
+            if render:
+                env.render()
+            action_step += 1
+            if final["physical_success"]:
+                break
+
+        video_path = output_dir / f"{policy_type}_seed{seed}.mp4"
+        video_saved = False
+        if frames and imageio is not None:
+            try:
+                imageio.mimsave(video_path, frames, fps=10, quality=8)
+                video_saved = True
+            except Exception as exc:
+                print("视频保存失败：", repr(exc))
+        elif frames:
+            print("未安装 imageio，跳过视频保存。可执行 pip install imageio imageio-ffmpeg 后重跑。")
+        row = {
+            "policy_type": policy_type,
+            "seed": int(seed),
+            "instruction": instruction,
+            "action_steps": int(action_step),
+            "elapsed_s": round(time.perf_counter() - started, 3),
+            "video": str(video_path) if video_saved else None,
+            **(final or {}),
+        }
+        print(json.dumps(row, ensure_ascii=False))
+        results.append(row)
+        env.env.close_viewer()
+
+    result_path = output_dir / "results.jsonl"
+    result_path.write_text(
+        "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in results),
+        encoding="utf-8",
+    )
+    physical = sum(row.get("physical_success", False) for row in results)
+    print(f"physical_success = {physical}/{len(results)}")
+    print("结果文件：", result_path)
+    return results
+'''
+
+
 def md(source: str) -> dict:
     return {
         "cell_type": "markdown",
@@ -123,6 +445,159 @@ def write_nb(filename: str, cells: list[dict]) -> None:
 
 
 NOTEBOOKS: dict[str, list[dict]] = {}
+
+
+def make_training_notebook(
+    filename: str,
+    number: str,
+    policy_type: str,
+    title: str,
+    summary: str,
+    full_steps: int,
+    batch_size: int,
+    chunk_size: int,
+    n_action_steps: int,
+    model_note: str,
+) -> None:
+    gate_cells: list[dict] = []
+    if policy_type == "pi0":
+        gate_cells = [
+            md("## Checkpoint 2：检查 Hugging Face gated 权限"),
+            code(
+                r'''
+token_present = bool(os.environ.get("HF_TOKEN"))
+print("HF_TOKEN 已注入当前进程：", token_present)
+if not token_present:
+    print("请在终端私密设置 HF_TOKEN，再重新启动 Jupyter kernel。不要把 token 写进 Notebook。")
+'''
+            ),
+            md("这里只检查环境变量是否存在，不打印 token。pi_0 训练还需要账号已经获得 PaliGemma 等 gated 权重的访问权限。"),
+        ]
+
+    config_cell = f'''
+MODEL_TYPE = {policy_type!r}
+DATASET_REPO_ID = os.environ.get("DATASET_REPO_ID", "datawhale_eai_pnp_language")
+TRAIN_DATA_ROOT = Path(
+    os.environ.get("TRAIN_DATA_ROOT", DATA_ROOT / "omy_pnp_language")
+).expanduser()
+
+RUN_SMOKE = False
+RUN_FULL_TRAIN = False
+
+SMOKE_OUTPUT = MODEL_ROOT / f"{{MODEL_TYPE}}_rocm_smoke"
+FULL_OUTPUT = MODEL_ROOT / f"{{MODEL_TYPE}}_rocm_full"
+
+smoke_config = make_training_config(
+    policy_type=MODEL_TYPE,
+    dataset_repo_id=DATASET_REPO_ID,
+    dataset_root=TRAIN_DATA_ROOT,
+    output_dir=SMOKE_OUTPUT,
+    steps=2,
+    batch_size=min(4, {batch_size}),
+    chunk_size={chunk_size},
+    n_action_steps={n_action_steps},
+    save_freq=2,
+)
+full_config = make_training_config(
+    policy_type=MODEL_TYPE,
+    dataset_repo_id=DATASET_REPO_ID,
+    dataset_root=TRAIN_DATA_ROOT,
+    output_dir=FULL_OUTPUT,
+    steps={full_steps},
+    batch_size={batch_size},
+    chunk_size={chunk_size},
+    n_action_steps={n_action_steps},
+    save_freq=max(1, {full_steps} // 2),
+)
+
+smoke_config_path = write_training_config(f"{{MODEL_TYPE}}_smoke", smoke_config)
+full_config_path = write_training_config(f"{{MODEL_TYPE}}_full", full_config)
+print("smoke output =", SMOKE_OUTPUT)
+print("full output =", FULL_OUTPUT)
+'''
+
+    cells = [
+        md(
+            f"""
+            # {number} {title}
+
+            {summary}
+
+            这一节从 LeRobot 数据检查开始，依次完成 2-step smoke、正式训练、ROCm 资源观察和 checkpoint 定位。所有长任务默认关闭，先确认生成的配置，再显式打开运行开关。
+            """
+        ),
+        code(COMMON_SETUP),
+        code(DISPLAY_HELPERS),
+        code(TRAINING_HELPERS),
+        md("## Checkpoint 1：确认项目和训练数据"),
+        code(
+            r'''
+require_project_layout()
+print("train_model.py =", PROJECT_ROOT / "train_model.py")
+print("训练数据 =", Path(os.environ.get("TRAIN_DATA_ROOT", DATA_ROOT / "omy_pnp_language")))
+'''
+        ),
+        code(
+            r'''
+candidate = Path(os.environ.get("TRAIN_DATA_ROOT", DATA_ROOT / "omy_pnp_language"))
+if (candidate / "meta" / "info.json").exists():
+    dataset_report(candidate)
+else:
+    print("训练数据还没准备好：", candidate)
+    print("先完成 07_data_collection_and_audit.ipynb，或设置 TRAIN_DATA_ROOT 指向已有 LeRobot 数据集。")
+'''
+        ),
+    ]
+    cells.extend(gate_cells)
+    checkpoint_number = 3 if policy_type == "pi0" else 2
+    cells.extend(
+        [
+            md(f"## Checkpoint {checkpoint_number}：生成 smoke 与正式训练配置"),
+            code(config_cell),
+            md(
+                "配置文件会写到 `$OUTPUT_ROOT/configs`，checkpoint 写到 `$MODEL_ROOT`。这两个目录应放在容量充足的磁盘，不要写进 Git 仓库。"
+            ),
+            md(f"## Checkpoint {checkpoint_number + 1}：先跑 2-step smoke"),
+            code(
+                r'''
+show_rocm_resources()
+run_training(smoke_config_path, enabled=RUN_SMOKE)
+'''
+            ),
+            md(
+                "2-step smoke 只证明数据加载、模型构造、forward/backward、optimizer step 和 checkpoint 写出可用；它不证明模型收敛，更不能替代 MuJoCo closed-loop 成功率。"
+            ),
+            md(f"## Checkpoint {checkpoint_number + 2}：启动正式训练"),
+            code(
+                r'''
+run_training(full_config_path, enabled=RUN_FULL_TRAIN)
+'''
+            ),
+            md(model_note),
+            md(
+                """
+                常见恢复顺序：显存不足先减小 `batch_size`；出现 DataLoader worker / pickle 错误时把 YAML 中的 `num_workers` 改为 `0`；下载报 `401/403` 时检查账号权限和私密 `HF_TOKEN`；写 checkpoint 失败先检查 `$MODEL_ROOT` 所在磁盘。ROCm 的 MIOpen 数据库 warning 如果没有伴随训练退出可以记录后继续观察，出现 kernel 退出、NaN 或进程消失则必须停止长训练并回到 smoke。
+                """
+            ),
+            md(f"## Checkpoint {checkpoint_number + 3}：定位 checkpoint 并检查资源"),
+            code(
+                r'''
+show_rocm_resources()
+if (FULL_OUTPUT / "checkpoints").exists():
+    checkpoints = sorted((FULL_OUTPUT / "checkpoints").glob("*/pretrained_model"))
+    print("可用 checkpoint：")
+    for path in checkpoints:
+        print(" -", path)
+else:
+    print("正式训练尚未运行：", FULL_OUTPUT)
+'''
+            ),
+            md(
+                "训练完成后不要只挑 loss 最低的节点。下一步进入 `11_mujoco_closed_loop_deploy.ipynb`，用固定 seed、严格 `physical_success` 和视频复核比较中间 checkpoint 与最终 checkpoint。"
+            ),
+        ]
+    )
+    NOTEBOOKS[filename] = cells
 
 
 NOTEBOOKS["01_device_env_check.ipynb"] = [
@@ -738,6 +1213,455 @@ rows = [
 md_table(["案例", "学习结论"], rows)
 '''
     ),
+]
+
+
+NOTEBOOKS["07_data_collection_and_audit.ipynb"] = [
+    md(
+        """
+        # 07 从零采集 MuJoCo LeRobot 示教数据
+
+        这一节把 `5.language_env.ipynb` 的交互采集流程整理成可配置、可复核的版本。最终产物是一个包含双相机图像、6 维关节状态、7 维动作和红/蓝杯语言指令的 LeRobot 数据集。
+
+        采集不是纯 GPU 任务，NVIDIA 或 AMD 设备都可以完成。真正需要保持一致的是 MuJoCo 场景、LeRobot 数据格式、控制频率、state/action 定义和成功判定。远端 Jupyter 无法稳定接收 MuJoCo viewer 键盘事件时，可以在有桌面的机器采集，再把数据目录同步到 AMD 训练机。
+        """
+    ),
+    code(COMMON_SETUP),
+    code(DISPLAY_HELPERS),
+    code(TRAINING_HELPERS),
+    md("## Checkpoint 1：设置采集目录与安全开关"),
+    code(
+        r'''
+DATASET_REPO_ID = os.environ.get("DATASET_REPO_ID", "datawhale_eai_pnp_language_local")
+COLLECTION_ROOT = Path(
+    os.environ.get("COLLECTION_ROOT", DATA_ROOT / "omy_pnp_language")
+).expanduser()
+NUM_DEMOS = int(os.environ.get("NUM_DEMOS", "20"))
+SEED_START = int(os.environ.get("SEED_START", "0"))
+INSTRUCTIONS = [
+    "Place the red mug on the plate.",
+    "Place the blue mug on the plate.",
+]
+
+RUN_INTERACTIVE_COLLECTION = False
+OVERWRITE_DATASET = False
+
+print("dataset repo_id =", DATASET_REPO_ID)
+print("collection root =", COLLECTION_ROOT)
+print("num demos =", NUM_DEMOS)
+print("instructions =", INSTRUCTIONS)
+'''
+    ),
+    md(
+        "`COLLECTION_ROOT` 应放在大容量数据盘。默认不开启采集，也不会删除已有目录；只有明确把 `OVERWRITE_DATASET=True` 后才允许覆盖。20 条可以跑通语言条件小实验，想做位置泛化时建议采 30–50 条高质量轨迹，并让红杯、蓝杯和初始位置都得到覆盖。"
+    ),
+    md("## Checkpoint 2：检查项目、显示和数据 schema"),
+    code(
+        r'''
+require_project_layout()
+print("MuJoCo scene =", PROJECT_ROOT / "asset" / "example_scene_y2.xml")
+print("DISPLAY =", os.environ.get("DISPLAY"))
+if not os.environ.get("DISPLAY"):
+    print("当前没有 DISPLAY。交互采集需要本地桌面、远程桌面或可用的 X11 会话。")
+
+FEATURES = {
+    "observation.image": {
+        "dtype": "image",
+        "shape": (256, 256, 3),
+        "names": ["height", "width", "channels"],
+    },
+    "observation.wrist_image": {
+        "dtype": "image",
+        "shape": (256, 256, 3),
+        "names": ["height", "width", "channels"],
+    },
+    "observation.state": {
+        "dtype": "float32",
+        "shape": (6,),
+        "names": ["state"],
+    },
+    "action": {
+        "dtype": "float32",
+        "shape": (7,),
+        "names": ["action"],
+    },
+    "obj_init": {
+        "dtype": "float32",
+        "shape": (9,),
+        "names": [
+            "red_x", "red_y", "red_z",
+            "blue_x", "blue_y", "blue_z",
+            "plate_x", "plate_y", "plate_z",
+        ],
+    },
+}
+md_table(
+    ["字段", "shape", "作用"],
+    [
+        ("observation.image", "256x256x3", "固定相机"),
+        ("observation.wrist_image", "256x256x3", "腕部相机"),
+        ("observation.state", "6", "当前 6 关节状态"),
+        ("action", "7", "下一步 6 关节目标 + 夹爪"),
+        ("obj_init", "9", "三件物体初始 xyz，仅用于回放/审计"),
+    ],
+)
+'''
+    ),
+    md("## Checkpoint 3：定义严格成功判定"),
+    code(
+        r'''
+import numpy as np
+
+
+def collection_success(env, initial_target_z, max_target_lift, max_lifted_run):
+    target_pos = np.asarray(env.env.get_p_body(env.obj_target), dtype=np.float64)
+    plate_pos = np.asarray(env.env.get_p_body("body_obj_plate_11"), dtype=np.float64)
+    target_R = np.asarray(env.env.get_R_body(env.obj_target), dtype=np.float64)
+    legacy_success = bool(env.check_success())
+    upright_cos = float(target_R[2, 2])
+    physical_success = bool(
+        legacy_success
+        and max_target_lift >= 0.03
+        and max_lifted_run >= 3
+        and upright_cos >= 0.7
+        and abs(float(target_pos[2] - plate_pos[2])) < 0.15
+    )
+    return {
+        "legacy_success": legacy_success,
+        "physical_success": physical_success,
+        "xy_dist": float(np.linalg.norm(target_pos[:2] - plate_pos[:2])),
+        "max_target_lift": float(max_target_lift),
+        "max_lifted_run": int(max_lifted_run),
+        "upright_cos": upright_cos,
+    }
+'''
+    ),
+    md(
+        "旧 `check_success()` 只看终态几何关系，杯子被推到盘子附近也可能触发。这里额外要求杯子至少抬升 3 cm、连续保持 3 个控制步、终态保持直立，并且杯子高度与盘子相符。只有 `physical_success=True` 才写入 episode。"
+    ),
+    md("## Checkpoint 4：创建或加载 LeRobot 数据集"),
+    code(
+        r'''
+def create_or_load_dataset():
+    from lerobot.common.datasets.lerobot_dataset import LeRobotDataset
+
+    COLLECTION_ROOT.parent.mkdir(parents=True, exist_ok=True)
+    if COLLECTION_ROOT.exists() and OVERWRITE_DATASET:
+        shutil.rmtree(COLLECTION_ROOT)
+    if COLLECTION_ROOT.exists():
+        print("继续写入已有数据集：", COLLECTION_ROOT)
+        return LeRobotDataset(DATASET_REPO_ID, root=COLLECTION_ROOT)
+    print("创建新数据集：", COLLECTION_ROOT)
+    return LeRobotDataset.create(
+        repo_id=DATASET_REPO_ID,
+        root=COLLECTION_ROOT,
+        robot_type="omy",
+        fps=20,
+        features=FEATURES,
+        image_writer_threads=10,
+        image_writer_processes=0,
+    )
+'''
+    ),
+    md("## Checkpoint 5：键盘采集完整循环"),
+    code(
+        r'''
+def collect_demonstrations():
+    import random
+    import numpy as np
+    from PIL import Image
+    from mujoco_env.y_env2 import SimpleEnv2
+
+    dataset = create_or_load_dataset()
+    xml_path = PROJECT_ROOT / "asset" / "example_scene_y2.xml"
+
+    def reset_episode(env, episode_id):
+        seed = SEED_START + episode_id
+        np.random.seed(seed)
+        random.seed(seed)
+        env.reset(seed=None)
+        instruction = INSTRUCTIONS[episode_id % len(INSTRUCTIONS)]
+        env.set_instruction(instruction)
+        initial_z = float(env.env.get_p_body(env.obj_target)[2])
+        print(f"episode={episode_id} seed={seed} task={instruction}")
+        return initial_z
+
+    np.random.seed(SEED_START)
+    random.seed(SEED_START)
+    env = SimpleEnv2(str(xml_path), seed=None, state_type="joint_angle")
+    episode_id = 0
+    record_flag = False
+    initial_target_z = reset_episode(env, episode_id)
+    max_target_lift = 0.0
+    lifted_run = 0
+    max_lifted_run = 0
+
+    try:
+        while env.env.is_viewer_alive() and episode_id < NUM_DEMOS:
+            env.step_env()
+            if not env.env.loop_every(HZ=20):
+                continue
+
+            target_z = float(env.env.get_p_body(env.obj_target)[2])
+            lift = target_z - initial_target_z
+            max_target_lift = max(max_target_lift, lift)
+            lifted_run = lifted_run + 1 if lift >= 0.03 else 0
+            max_lifted_run = max(max_lifted_run, lifted_run)
+            status = collection_success(env, initial_target_z, max_target_lift, max_lifted_run)
+
+            if record_flag and status["physical_success"]:
+                dataset.save_episode()
+                print("saved:", json.dumps(status, ensure_ascii=False))
+                episode_id += 1
+                record_flag = False
+                if episode_id >= NUM_DEMOS:
+                    break
+                initial_target_z = reset_episode(env, episode_id)
+                max_target_lift = 0.0
+                lifted_run = 0
+                max_lifted_run = 0
+                continue
+
+            teleop_delta, reset = env.teleop_robot()
+            if reset:
+                dataset.clear_episode_buffer()
+                record_flag = False
+                initial_target_z = reset_episode(env, episode_id)
+                max_target_lift = 0.0
+                lifted_run = 0
+                max_lifted_run = 0
+                continue
+
+            if not record_flag and np.any(np.abs(teleop_delta) > 1e-8):
+                record_flag = True
+                print("Start recording")
+
+            agent_image, wrist_image = env.grab_image()
+            state = env.get_joint_state()[:6].astype(np.float32)
+            env.step(teleop_delta)
+            target_action = env.q[:7].astype(np.float32)
+
+            if record_flag:
+                dataset.add_frame(
+                    {
+                        "observation.image": np.asarray(Image.fromarray(agent_image).resize((256, 256))),
+                        "observation.wrist_image": np.asarray(Image.fromarray(wrist_image).resize((256, 256))),
+                        "observation.state": state,
+                        "action": target_action,
+                        "obj_init": np.asarray(env.obj_init_pose, dtype=np.float32),
+                    },
+                    task=env.instruction,
+                )
+            env.render(teleop=True, idx=episode_id)
+    finally:
+        env.env.close_viewer()
+        shutil.rmtree(dataset.root / "images", ignore_errors=True)
+    print(f"采集完成：{episode_id}/{NUM_DEMOS}")
+    return dataset
+
+
+if RUN_INTERACTIVE_COLLECTION:
+    dataset = collect_demonstrations()
+else:
+    print("采集默认关闭。确认 DISPLAY、路径和覆盖开关后，将 RUN_INTERACTIVE_COLLECTION 改为 True。")
+'''
+    ),
+    md(
+        "键位与上游教程一致：`W/A/S/D` 控制平面移动，`R/F` 控制高度，`Q/E` 与方向键控制姿态，空格切换夹爪，`Z` 丢弃当前失败回合。每次成功保存后会重新关闭记录开关，避免把 reset 过程混进下一条 episode。"
+    ),
+    md("## Checkpoint 6：采集后审计"),
+    code(
+        r'''
+info_path = COLLECTION_ROOT / "meta" / "info.json"
+if info_path.exists():
+    info, tasks = dataset_report(COLLECTION_ROOT)
+    episodes_path = COLLECTION_ROOT / "meta" / "episodes.jsonl"
+    episodes = [
+        json.loads(line)
+        for line in episodes_path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+    task_counts = {}
+    for episode in episodes:
+        task = episode.get("tasks", [""])[0]
+        task_counts[task] = task_counts.get(task, 0) + 1
+    md_table(["指令", "episode 数"], sorted(task_counts.items()))
+else:
+    print("还没有可审计的数据：", COLLECTION_ROOT)
+'''
+    ),
+    md(
+        "数据表通过后，再打开上游 `6.visualize_data.ipynb` 随机回放若干 episode。至少检查图像、state/action shape、夹爪开闭时序、是否真的抬起，以及红蓝杯指令是否平衡。完成这些检查后再进入 08–10 的训练 Notebook。"
+    ),
+]
+
+
+make_training_notebook(
+    filename="08_act_training_rocm.ipynb",
+    number="08",
+    policy_type="act",
+    title="ACT 从 smoke 到正式训练",
+    summary="ACT 是最适合先跑通完整闭环的基线。它不依赖语言主干，模型更小，能较快暴露数据、state/action 对齐和夹爪标签问题。",
+    full_steps=5000,
+    batch_size=16,
+    chunk_size=10,
+    n_action_steps=10,
+    model_note="ACT 示例先以 5,000 步作为基线。单条轨迹很容易过拟合，位置泛化实验应使用多条高质量轨迹，并固定 held-out seeds。训练时同时看 loss、动作 MAE 和显存，但最终以 closed-loop physical_success 为准。",
+)
+
+
+make_training_notebook(
+    filename="09_smolvla_training_rocm.ipynb",
+    number="09",
+    policy_type="smolvla",
+    title="SmolVLA 从 smoke 到正式训练",
+    summary="SmolVLA 同时读取图像、语言和机器人状态。这里使用与 ACT 相同的数据根目录，但必须检查红杯、蓝杯指令是否都存在，不能只看总体成功率。",
+    full_steps=20000,
+    batch_size=4,
+    chunk_size=5,
+    n_action_steps=5,
+    model_note="SmolVLA 首次运行会下载基础权重。正式训练建议保存中间 checkpoint，并分别统计红杯和蓝杯的 physical_success；如果一类明显落后，先检查任务分布和 gripper 事件，再考虑 Weighted sampler。",
+)
+
+
+make_training_notebook(
+    filename="10_pi0_training_rocm.ipynb",
+    number="10",
+    policy_type="pi0",
+    title="pi_0 从权限门控到正式训练",
+    summary="pi_0 的模型加载、gated 权限和显存压力都更高。这里先把权限、数据、模型构造和 2-step 反向传播逐项过门，再启动正式训练。",
+    full_steps=20000,
+    batch_size=4,
+    chunk_size=5,
+    n_action_steps=5,
+    model_note="pi_0 的训练 loss 下降并不保证闭环抓取成功。小数据接触任务尤其容易出现 gripper 时序和误差累积问题。raw policy、learned auxiliary head 和带脚手架的 hybrid 结果必须分开报告。",
+)
+
+
+NOTEBOOKS["11_mujoco_closed_loop_deploy.ipynb"] = [
+    md(
+        """
+        # 11 把 checkpoint 部署到 MuJoCo 闭环
+
+        这一节把 ACT、SmolVLA 或 pi_0 checkpoint 放回 `SimpleEnv2`，让策略按 20 Hz 读取双相机图像和 6 维关节状态，并输出 7 维动作。评估会保存视频和 JSONL，同时报告旧几何成功与严格 `physical_success`。
+
+        这是仿真闭环推理，不是把模型导出成服务。模型每次动作后都会重新读取环境观测；如果只在数据集上预测 GT 动作，那属于 open-loop replay，不能替代这里的成功率。
+        """
+    ),
+    code(COMMON_SETUP),
+    code(DISPLAY_HELPERS),
+    code(TRAINING_HELPERS),
+    code(ROLLOUT_HELPERS),
+    md("## Checkpoint 1：选择模型、数据统计和评估 seed"),
+    code(
+        r'''
+POLICY_TYPE = os.environ.get("POLICY_TYPE", "act")  # act / smolvla / pi0
+DATASET_REPO_ID = os.environ.get("DATASET_REPO_ID", "datawhale_eai_pnp_language")
+EVAL_DATA_ROOT = Path(
+    os.environ.get("EVAL_DATA_ROOT", DATA_ROOT / "omy_pnp_language")
+).expanduser()
+MODEL_RUN_DIR = Path(
+    os.environ.get("MODEL_RUN_DIR", MODEL_ROOT / f"{POLICY_TYPE}_rocm_full")
+).expanduser()
+TASK_TEXT = os.environ.get("TASK_TEXT", "Place the blue mug on the plate.")
+EVAL_SEEDS = [int(value) for value in os.environ.get("EVAL_SEEDS", "1000,1001,1002,1003").split(",")]
+MAX_ACTION_STEPS = int(os.environ.get("MAX_ACTION_STEPS", "300"))
+RUN_CLOSED_LOOP = False
+
+print("policy type =", POLICY_TYPE)
+print("model run =", MODEL_RUN_DIR)
+print("dataset =", EVAL_DATA_ROOT)
+print("task =", TASK_TEXT)
+print("seeds =", EVAL_SEEDS)
+'''
+    ),
+    md(
+        "先用 4 个固定 seed 做 smoke，但 4 条不具有统计代表性。模型通过小面板后，再扩到至少 20–30 个 held-out seeds，并把红杯、蓝杯分别统计。评估时不要读取 target/plate 坐标、数据集 phase 或 GT 动作作为策略输入。"
+    ),
+    md("## Checkpoint 2：检查数据与 checkpoint"),
+    code(
+        r'''
+require_project_layout()
+if (EVAL_DATA_ROOT / "meta" / "info.json").exists():
+    dataset_report(EVAL_DATA_ROOT)
+else:
+    print("缺少评估数据统计：", EVAL_DATA_ROOT)
+
+try:
+    POLICY_PATH = Path(os.environ.get("POLICY_PATH", ""))
+    if not str(POLICY_PATH) or str(POLICY_PATH) == ".":
+        POLICY_PATH = find_pretrained_model(MODEL_RUN_DIR)
+    print("policy path =", POLICY_PATH)
+except FileNotFoundError as exc:
+    POLICY_PATH = None
+    print(exc)
+'''
+    ),
+    md("## Checkpoint 3：加载策略并执行闭环"),
+    code(
+        r'''
+if RUN_CLOSED_LOOP:
+    if POLICY_PATH is None:
+        raise FileNotFoundError("请先完成训练，或通过 POLICY_PATH 指定 pretrained_model。")
+    if POLICY_TYPE == "pi0" and not os.environ.get("HF_TOKEN"):
+        print("本地 checkpoint 通常可离线加载；若仍需读取 gated 配置，请先私密设置 HF_TOKEN。")
+    show_rocm_resources()
+    policy = load_policy(
+        policy_type=POLICY_TYPE,
+        policy_path=POLICY_PATH,
+        dataset_repo_id=DATASET_REPO_ID,
+        dataset_root=EVAL_DATA_ROOT,
+        device="cuda",
+    )
+    results = run_closed_loop(
+        policy=policy,
+        policy_type=POLICY_TYPE,
+        instruction=TASK_TEXT,
+        seeds=EVAL_SEEDS,
+        output_dir=OUTPUT_ROOT / f"{POLICY_TYPE}_closed_loop",
+        device="cuda",
+        max_action_steps=MAX_ACTION_STEPS,
+        render=True,
+    )
+else:
+    print("闭环评估默认关闭。确认 DISPLAY、checkpoint、数据统计和 seed 后，将 RUN_CLOSED_LOOP 改为 True。")
+'''
+    ),
+    md("## Checkpoint 4：读取成功率和失败类型"),
+    code(
+        r'''
+result_path = OUTPUT_ROOT / f"{POLICY_TYPE}_closed_loop" / "results.jsonl"
+if result_path.exists():
+    rows = [json.loads(line) for line in result_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    physical = sum(row.get("physical_success", False) for row in rows)
+    legacy = sum(row.get("legacy_success", False) for row in rows)
+    md_table(
+        ["口径", "结果"],
+        [
+            ("legacy_success", f"{legacy}/{len(rows)}"),
+            ("physical_success", f"{physical}/{len(rows)}"),
+        ],
+    )
+    for row in rows:
+        if not row.get("physical_success"):
+            print(
+                "失败 seed",
+                row["seed"],
+                "xy=", round(row.get("xy_dist", float("nan")), 4),
+                "lift=", round(row.get("max_target_lift", float("nan")), 4),
+                "upright=", round(row.get("upright_cos", float("nan")), 4),
+            )
+else:
+    print("尚未生成闭环结果：", result_path)
+'''
+    ),
+    md(
+        "如果 `legacy_success > physical_success`，优先查看失败视频，通常是推杯、未真正夹住、运输中掉落或只满足终态几何条件。下一步回到 02–06 的诊断 Notebook，把失败定位到 approach、contact、lift、transport、release 中的具体阶段。"
+    ),
+]
+
+
+NOTEBOOKS["06_rocm_debug_playbook.ipynb"].extend([
     md("## Checkpoint 3：pi0 hard-reset 评估协议案例"),
     md(
         """
@@ -781,7 +1705,7 @@ rows = [
 md_table(["项目", "应该写什么"], rows)
 '''
     ),
-]
+])
 
 
 def main() -> None:
